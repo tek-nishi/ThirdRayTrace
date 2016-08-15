@@ -16,16 +16,17 @@
 #include <stb_image_write.h>
 
 #define GLM_SWIZZLE
+#define GLM_META_PROG_HELPERS
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
 #include <vector>
 #include <iostream>
+#include <fstream>
+#include <picojson.h>
 
 
 enum {
-  WIDTH      = 800,
-  HEIGHT     = 600,
   COMPONENTS = 3,
 };
 
@@ -162,38 +163,65 @@ glm::vec2 vec3ToUV(const glm::vec3& normal) {
 }
 
 
+template <typename T>
+T getVec(const picojson::value& values) {
+  T v;
+  const auto& array = values.get<picojson::array>();
+  for (size_t i = 0; i < T::components; ++i) {
+    v[i] = array[i].get<double>();
+  }
+
+  return v;
+}
+
+
 int main() {
-  std::vector<glm::vec3> pixel(WIDTH * HEIGHT);
+  // セッティング
+  picojson::value settings;
+  {
+    std::ifstream ifs("settings.json");
+    ifs >> settings;
+  }
+
+  // 解像度
+  // TIPS:キャストを減らすためint型とfloat型の両方を用意
+  glm::ivec2 iresolution = getVec<glm::ivec2>(settings.get("resolution"));
+  glm::vec2 resolution(iresolution);
+
+  // レンダリング結果
+  std::vector<glm::vec3> pixel(iresolution.x * iresolution.y);
 
   // カメラ
-  glm::mat4 transform = glm::rotate(-0.4f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-                        glm::rotate(-0.3f, glm::vec3(1.0f, 0.0f, 0.0f));
+  glm::vec3 cam_rot = glm::radians(getVec<glm::vec3>(settings.get("cam_rot")));
+  glm::mat4 transform = glm::rotate(cam_rot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                        glm::rotate(cam_rot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
+                        glm::rotate(cam_rot.z, glm::vec3(0.0f, 0.0f, 1.0f));
     
-  glm::vec3 cam_pos{ -2.0f, 2.5f, 5.0f };
+  glm::vec3 cam_pos = getVec<glm::vec3>(settings.get("cam_pos"));
   glm::vec3 cam_dir = (transform * glm::vec4{ 0.0f, 0.0f, -1.0f, 1.0f }).xyz();
   glm::vec3 cam_up  = (transform * glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f }).xyz();
   glm::vec3 cam_side = glm::cross(cam_dir, cam_up);
+
   // 焦点距離
-  float focus = 2.5f;
+  float focus = settings.get("focus").get<double>();
 
   // 光源
-  glm::vec3 light_dir{ -0.577f, 0.577f, 0.577f };
+  glm::vec3 light_dir = getVec<glm::vec3>(settings.get("light_dir"));
   
-  // 画面解像度
-  glm::vec2 resolution{ float(WIDTH), float(HEIGHT) };
-
   // IBL用画像
   int bg_x, bg_y, bg_comp;
-  float* ibl_image = stbi_loadf("bg.hdr", &bg_x, &bg_y, &bg_comp, 0);
-
+  float* ibl_image = stbi_loadf(settings.get("bg").get<std::string>().c_str(), &bg_x, &bg_y, &bg_comp, 0);
   glm::vec2 texture(bg_x - 1, bg_y - 1);
+
+  // 反復数
+  int iterate = settings.get("iterate").get<double>();
   
   // 全ピクセルでレイマーチ
-  for (int y = 0; y < HEIGHT; ++y) {
+  for (int y = 0; y < iresolution.y; ++y) {
     glm::vec2 coord;
-    coord.y = (HEIGHT - 1) - y;
+    coord.y = (iresolution.y - 1) - y;
     
-    for (int x = 0; x < WIDTH; ++x) {
+    for (int x = 0; x < iresolution.x; ++x) {
       coord.x = x;
 
       glm::vec2 pos = (coord.xy() * 2.0f - resolution) / resolution.y;
@@ -204,7 +232,7 @@ int main() {
       glm::vec3 pos_on_ray = cam_pos;
 
       // レイマーチで交差点を調べる
-      for(int i = 0; i < 256; ++i) {
+      for(int i = 0; i < iterate; ++i) {
         d = getDistance(pos_on_ray);
         t += d;
         pos_on_ray = cam_pos + t * ray_dir;
@@ -226,28 +254,29 @@ int main() {
 
         // IBL
         glm::vec2 uv = glm::clamp(vec3ToUV(normal) * texture, glm::vec2(0.0f, 0.0f), texture);
-        int index = (int(uv.x) + int(uv.y) * bg_x) * 3;
+        int index = (int(uv.x) + int(uv.y) * bg_x) * COMPONENTS;
         glm::vec3 ibl(ibl_image[index], ibl_image[index + 1], ibl_image[index + 2]);
         color = ibl * glm::vec3(diff) + glm::vec3(spec);
       }
       else {
         glm::vec2 uv = glm::clamp(vec3ToUV(ray_dir) * texture, glm::vec2(0.0f, 0.0f), texture);
-        int index = (int(uv.x) + int(uv.y) * bg_x) * 3;
+        int index = (int(uv.x) + int(uv.y) * bg_x) * COMPONENTS;
 
         glm::vec3 ibl(ibl_image[index], ibl_image[index + 1], ibl_image[index + 2]);
         color = ibl;
       }
       
-      pixel[x + y * WIDTH] = color * glm::max(0.5f, shadow);
+      pixel[x + y * iresolution.x] = color * glm::max(0.5f, shadow);
     }
   }
 
   
   // レンダリング結果をPNG形式に
-  std::vector<glm::u8vec3> bitmap(WIDTH * HEIGHT);
+  float exposure = settings.get("exposure").get<double>();
+  std::vector<glm::u8vec3> bitmap(iresolution.x * iresolution.y);
   for (size_t i = 0; i < pixel.size(); ++i) {
-    bitmap[i] = glm::u8vec3(glm::clamp(expose(pixel[i], -3.0f) * 255.0f, 0.0f, 255.0f));
+    bitmap[i] = glm::u8vec3(glm::clamp(expose(pixel[i], exposure) * 255.0f, 0.0f, 255.0f));
   }
   
-  stbi_write_png("test.png", WIDTH, HEIGHT, 3, bitmap.data(), WIDTH * COMPONENTS);
+  stbi_write_png("test.png", iresolution.x, iresolution.y, COMPONENTS, bitmap.data(), iresolution.x * COMPONENTS);
 }
