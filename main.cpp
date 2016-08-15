@@ -8,14 +8,19 @@
 // 5. 5分以内に自動で終了
 //
 
+// HDR読み込み
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 // PNG書き出し
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
-#include <vector>
 
 #define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+
+#include <vector>
+#include <iostream>
 
 
 enum {
@@ -125,15 +130,48 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
 }
 
 
+// 露出計算
+// exposure 露出値(マイナス値)
+glm::vec3 expose(const glm::vec3& light, const float exposure) {
+  return glm::vec3(1.0f) - glm::exp(light * exposure);
+}
+
+
+// IBLからUVへ
+// SOURCE:http://www_test.dstorm.co.jp/products/lw8/developer/docs/uv.htm
+glm::vec2 vec3ToUV(const glm::vec3& normal) {
+  glm::vec2 uv;
+  
+  if (normal.x == 0.0f && normal.z == 0.0f) {
+    if (normal.y != 0.0f) uv.y = (normal.y < 0.0f) ? -M_PI_2 : M_PI_2;
+    else                  uv.y = 0.0f;
+  }
+  else {
+    if (normal.z == 0.0f) uv.x = (normal.x < 0.0f) ? M_PI_2 : -M_PI_2;
+    else                  uv.x = glm::atan(normal.x, normal.z);
+    
+    float x = glm::length(normal.xz());
+    if (x == 0.0f) uv.y = (normal.y < 0.0f) ? -M_PI_2 : M_PI_2;
+    else           uv.y = glm::atan(normal.y, x);
+  }
+
+  uv.x = 0.5f - uv.x / (M_PI * 2.0f);
+  uv.y = 0.5f - uv.y / M_PI;
+
+  return uv;
+}
+
+
 int main() {
   std::vector<glm::vec3> pixel(WIDTH * HEIGHT);
 
   // カメラ
-  glm::vec3 cam_pos{ -1.0f, 3.0f, 4.0f };
-  glm::vec3 cam_dir = (glm::rotate(-0.6f, glm::vec3(1.0f, 0.0f, 0.0f)) *
-                       glm::rotate(-0.2f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-                       glm::vec4{ 0.0f, 0.0f, -1.0f, 1.0f }).xyz();
-  glm::vec3 cam_up{ 0.0f, 1.0f, 0.0f };
+  glm::mat4 transform = glm::rotate(-0.4f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                        glm::rotate(-0.3f, glm::vec3(1.0f, 0.0f, 0.0f));
+    
+  glm::vec3 cam_pos{ -2.0f, 2.5f, 5.0f };
+  glm::vec3 cam_dir = (transform * glm::vec4{ 0.0f, 0.0f, -1.0f, 1.0f }).xyz();
+  glm::vec3 cam_up  = (transform * glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f }).xyz();
   glm::vec3 cam_side = glm::cross(cam_dir, cam_up);
   // 焦点距離
   float focus = 2.5f;
@@ -143,6 +181,12 @@ int main() {
   
   // 画面解像度
   glm::vec2 resolution{ float(WIDTH), float(HEIGHT) };
+
+  // IBL用画像
+  int bg_x, bg_y, bg_comp;
+  float* ibl_image = stbi_loadf("bg.hdr", &bg_x, &bg_y, &bg_comp, 0);
+
+  glm::vec2 texture(bg_x - 1, bg_y - 1);
   
   // 全ピクセルでレイマーチ
   for (int y = 0; y < HEIGHT; ++y) {
@@ -179,8 +223,19 @@ int main() {
 
         // 影の計算
         shadow = genShadow(pos_on_ray + normal * 0.001f, light_dir);
-        
-        color = glm::vec3(diff) + glm::vec3(spec);
+
+        // IBL
+        glm::vec2 uv = glm::clamp(vec3ToUV(normal) * texture, glm::vec2(0.0f, 0.0f), texture);
+        int index = (int(uv.x) + int(uv.y) * bg_x) * 3;
+        glm::vec3 ibl(ibl_image[index], ibl_image[index + 1], ibl_image[index + 2]);
+        color = ibl * glm::vec3(diff) + glm::vec3(spec);
+      }
+      else {
+        glm::vec2 uv = glm::clamp(vec3ToUV(ray_dir) * texture, glm::vec2(0.0f, 0.0f), texture);
+        int index = (int(uv.x) + int(uv.y) * bg_x) * 3;
+
+        glm::vec3 ibl(ibl_image[index], ibl_image[index + 1], ibl_image[index + 2]);
+        color = ibl;
       }
       
       pixel[x + y * WIDTH] = color * glm::max(0.5f, shadow);
@@ -191,7 +246,7 @@ int main() {
   // レンダリング結果をPNG形式に
   std::vector<glm::u8vec3> bitmap(WIDTH * HEIGHT);
   for (size_t i = 0; i < pixel.size(); ++i) {
-    bitmap[i] = glm::u8vec3(glm::clamp(pixel[i] * 255.0f, 0.0f, 255.0f));
+    bitmap[i] = glm::u8vec3(glm::clamp(expose(pixel[i], -3.0f) * 255.0f, 0.0f, 255.0f));
   }
   
   stbi_write_png("test.png", WIDTH, HEIGHT, 3, bitmap.data(), WIDTH * COMPONENTS);
