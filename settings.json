@@ -1,5 +1,5 @@
 {
-  "resolution": [ 512, 256 ],
+  "resolution": [ 800, 600 ],
 
   "cam_pos": [ -2.0, 2.5, 5.0 ],
   "cam_rot": [ -20, -18, 0.0 ],
@@ -10,6 +10,8 @@
 
   "bg": "bg.hdr",
 
+  "param_alpha": 0.1,
+  
   "iterate": 128,
   
   "exposure": -3.0

@@ -175,6 +175,25 @@ T getVec(const picojson::value& values) {
 }
 
 
+float param_alpha = 0.1;
+
+float sqr(float x) { return x * x; }
+
+float GGX(float alpha, float cosThetaM) {
+  float CosSquared = cosThetaM * cosThetaM;
+  float TanSquared = (1.0f - CosSquared) / CosSquared;
+  return (1.0f / M_PI) * sqr(alpha / (CosSquared * (alpha*alpha + TanSquared)));
+}
+
+// L light vec
+// V view vec
+// N normal vec
+float BRDF(const glm::vec3& L, const glm::vec3& V, const glm::vec3& N) {
+  glm::vec3 H = glm::normalize(L + V);
+  return GGX(param_alpha, glm::dot(N, H));
+}
+
+
 int main() {
   // セッティング
   picojson::value settings;
@@ -213,6 +232,9 @@ int main() {
   float* ibl_image = stbi_loadf(settings.get("bg").get<std::string>().c_str(), &bg_x, &bg_y, &bg_comp, 0);
   glm::vec2 texture(bg_x - 1, bg_y - 1);
 
+  // BRDF
+  param_alpha = settings.get("param_alpha").get<double>();
+
   // 反復数
   int iterate = settings.get("iterate").get<double>();
   
@@ -243,11 +265,18 @@ int main() {
 
       if(glm::abs(d) < 0.001) {
         glm::vec3 normal = getNormal(pos_on_ray);
+#if 1
+        // BRDF
+        glm::vec3 view_dir = glm::normalize(cam_pos - pos_on_ray);
+        float diff = glm::clamp(glm::dot(light_dir, normal), 0.1f, 1.0f);
+        float spec = BRDF(light_dir, view_dir, normal);
+#else
         float diff = glm::clamp(glm::dot(light_dir, normal), 0.1f, 1.0f);
 
         // よくある環境光とスペキュラーの計算
         glm::vec3 halfLE = glm::normalize(light_dir - ray_dir);
         float spec = glm::pow(glm::clamp(glm::dot(halfLE, normal), 0.0f, 1.0f), 50.0f);
+#endif
 
         // 影の計算
         shadow = genShadow(pos_on_ray + normal * 0.001f, light_dir);
@@ -256,7 +285,7 @@ int main() {
         glm::vec2 uv = glm::clamp(vec3ToUV(normal) * texture, glm::vec2(0.0f, 0.0f), texture);
         int index = (int(uv.x) + int(uv.y) * bg_x) * COMPONENTS;
         glm::vec3 ibl(ibl_image[index], ibl_image[index + 1], ibl_image[index + 2]);
-        color = ibl * glm::vec3(diff) + glm::vec3(spec);
+        color = ibl * glm::vec3(spec) + glm::vec3(diff);
       }
       else {
         glm::vec2 uv = glm::clamp(vec3ToUV(ray_dir) * texture, glm::vec2(0.0f, 0.0f), texture);
