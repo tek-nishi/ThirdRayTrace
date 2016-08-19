@@ -236,11 +236,53 @@ float distance(const glm::vec3& pos) {
 		max(0.5*log(r)*r/dr, abs(pos.z)));
 	*/
 }
+
+}
+
+namespace Knot {
+
+float tubeRadius;
+float groupRadius;
+float objectRadius;
+float RotNumeratorX;
+float RotNumeratorY;
+float RotDenominator;
+int Rotations;
+
+float Cylinder(glm::vec2 p) {
+	p.x -= groupRadius;
+	return glm::length(p) - tubeRadius;
+}
+
+float twist(const glm::vec3& p) { //seen from above it is a lissajou fugure
+	float ra =  p.z * RotNumeratorX / RotDenominator;
+	float raz = p.z * RotNumeratorY / RotDenominator;
+	return glm::length(p.xy() - glm::vec2(groupRadius * glm::cos(ra) + objectRadius, groupRadius * glm::sin(raz) + objectRadius)) - tubeRadius;
+}
+
+glm::vec3 bend2PI(const glm::vec3& p) {
+	return glm::vec3(glm::length(p.xz()), p.y, glm::atan(p.z, p.x));
+}
+
+float distance(const glm::vec3& p) {
+	float r = glm::length(p.xz()), ang = glm::atan(p.z,p.x), y = p.y;
+	float d = 10000.0f;
+	for(int i = 0; i < Rotations; i++) {
+    glm::vec3 p = glm::vec3(r, y, ang + 2.0f * M_PI * i);
+		p.x -= objectRadius;
+		d = glm::min(d, twist(p));
+	}
+	return glm::min(d, p.y);
+}
+
 }
 
 
+
+
+
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbox::distance(p);
+  float d = Knot::distance(p);
   return d;
 }
 
@@ -599,7 +641,19 @@ int main() {
     Mandelbulb::Julia            = params.get("Julia").get<bool>();
     Mandelbulb::JuliaC           = getVec<glm::vec3>(params.get("JuliaC"));
   }
-  
+
+  // Knot
+  {
+    const auto params = settings.get("Knot");
+    
+    Knot::tubeRadius     = params.get("tubeRadius").get<double>();
+    Knot::groupRadius    = params.get("groupRadius").get<double>();
+    Knot::objectRadius   = params.get("objectRadius").get<double>();
+    Knot::RotNumeratorX  = params.get("RotNumeratorX").get<double>();
+    Knot::RotNumeratorY  = params.get("RotNumeratorY").get<double>();
+    Knot::RotDenominator = params.get("RotDenominator").get<double>();
+    Knot::Rotations      = params.get("Rotations").get<double>();
+  }
 
   lap_times.push_back(std::chrono::system_clock::now());
 

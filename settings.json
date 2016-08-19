@@ -1,14 +1,14 @@
 {
-  "resolution": [ 800, 600 ],
+  "resolution": [ 500, 500 ],
 
-  "cam_pos": [ 0.0, 0.0, 4.5 ],
-  "cam_rot": [ 5.0, 5.0, 5.0 ],
+  "cam_pos": [ 0.0, 0.0, 3.0 ],
+  "cam_rot": [ -55.0, 0.0, 0.0 ],
   
-  "focus": 1.0,
+  "focus": 1.5,
 
   "light_dir": [-0.577, 0.577, 0.577],
 
-  "bg": "ibl5.hdr",
+  "bg": "07.hdr",
 
   "alpha": 1.0,
   "diffuse": [ 0.8, 0.8, 0.8 ],
@@ -49,6 +49,16 @@
 
     "Julia": true,
     "JuliaC": [ 0.144, -0.55, 1.04 ]
+  },
+
+  "Knot": {
+    "tubeRadius": 0.1,
+    "groupRadius": 0.309,
+    "objectRadius": 0.3592,
+    "RotNumeratorX": 2, 
+    "RotNumeratorY": 2,
+    "RotDenominator": 3,
+    "Rotations": 5
   },
   
   "exposure": -2.5
