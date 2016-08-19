@@ -1,18 +1,43 @@
 {
   "resolution": [ 800, 600 ],
 
-  "cam_pos": [ -2.0, 2.5, 5.0 ],
-  "cam_rot": [ -20, -18, 0.0 ],
+  "cam_pos": [ 0.0, 0.0, 3.0 ],
+  "cam_rot": [ 0, -30.0, 0.0 ],
   
-  "focus": 2.5,
+  "focus": 1.5,
 
   "light_dir": [-0.577, 0.577, 0.577],
 
-  "bg": "bg.hdr",
+  "bg": "ibl5.hdr",
 
-  "param_alpha": 0.1,
+  "alpha": 1.0,
+  "diffuse": [ 0.8, 0.8, 0.8 ],
+  "specular": [ 0.0, 0.0, 0.0 ],
   
-  "iterate": 128,
+  "iterate": 150,
+  "nest":    1,
+  "path_trace": 1,
+
+  "shadow": {
+    "iteration": 16,
+    "coef":      0.35,
+    "power":     8
+  },
   
-  "exposure": -3.0
+  "julia": {
+    "iterations": 8,
+    "threshold": 8.22800,
+    "C": [ 0.11112, 0.87962, 0.09260, -0.23148 ]
+  },
+
+  "Mandelbox": {
+    "Iterations": 1,
+    "ColorIterations": 1,
+    "MinRad2": 0.25,
+    "Scale": 3,
+    "RotVector": [ 0, 1, 0 ],
+    "RotAngle": 0
+  },
+  
+  "exposure": -2.5
 }
