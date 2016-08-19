@@ -49,15 +49,6 @@ float distance(const glm::vec3& p) {
   return glm::length(p) - 1.0;
 }
 
-// 法線を求める
-glm::vec3 normal(const glm::vec3& p) {
-  const float d = 0.0001;
-
-  return glm::normalize(glm::vec3(distance(p + glm::vec3(d,0.0,0.0)) -distance(p + glm::vec3(-d,0.0,0.0)),
-                                  distance(p + glm::vec3(0.0,d,0.0)) -distance(p + glm::vec3(0.0,-d,0.0)),
-                                  distance(p + glm::vec3(0.0,0.0,d)) -distance(p + glm::vec3(0.0,0.0,-d))));
-}
-
 }
 
 
@@ -152,11 +143,17 @@ float distance(const glm::vec3& pos) {
   glm::vec4 p = glm::vec4(pos,1), p0 = p;  // p.w is the distance estimate
 	
 	for (int i = 0; i < Iterations; i++) {
-		//p.xyz*=rot;
-		p.xyz() = glm::clamp(p.xyz(), -1.0f, 1.0f) * 2.0f - p.xyz();  // min;max;mad
-		float r2 = glm::dot(p.xyz(), p.xyz());
-
+    glm::vec3 pp(p.xyz());
+    pp = rot * pp;
+    pp = glm::clamp(pp, -1.0f, 1.0f) * 2.0f - pp;  // min;max;mad
+		float r2 = glm::dot(pp, pp);
 		//if (i<ColorIterations) orbitTrap = min(orbitTrap, abs(vec4(p.xyz,r2)));
+
+    // FIXME:glmだと p.xyz = pp と書けない
+    p.x = pp.x;
+    p.y = pp.y;
+    p.z = pp.z;
+    
 		p *= glm::clamp(glm::max(MinRad2 / r2, MinRad2), 0.0f, 1.0f);  // dp3,div,max.sat,mul
 		p = p * scale + p0;
     if (r2 > 1000.0f) break;
@@ -225,7 +222,7 @@ float distance(const glm::vec3& pos) {
 		}
 		z+=(Julia ? JuliaC : pos);
 		r=glm::length(z);
-		z = z * rot;
+		z = rot * z;
 		i++;
 	}
 //	if ((type==1) && r<Bailout) return 0.0;
@@ -243,8 +240,7 @@ float distance(const glm::vec3& pos) {
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbulb::distance(p);
-  // d = glm::min(d, Plane::distance(p - glm::vec3(0, -1.5, 0)));
+  float d = Mandelbox::distance(p);
   return d;
 }
 
