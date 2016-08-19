@@ -155,20 +155,95 @@ float distance(const glm::vec3& pos) {
 		//p.xyz*=rot;
 		p.xyz() = glm::clamp(p.xyz(), -1.0f, 1.0f) * 2.0f - p.xyz();  // min;max;mad
 		float r2 = glm::dot(p.xyz(), p.xyz());
+
 		//if (i<ColorIterations) orbitTrap = min(orbitTrap, abs(vec4(p.xyz,r2)));
 		p *= glm::clamp(glm::max(MinRad2 / r2, MinRad2), 0.0f, 1.0f);  // dp3,div,max.sat,mul
 		p = p * scale + p0;
     if (r2 > 1000.0f) break;
 	}
-  
-	return (glm::length(p.xyz()) - absScalem1) / p.w - AbsScaleRaisedTo1mIters;
+
+  return (glm::length(p.xyz()) - absScalem1) / p.w - AbsScaleRaisedTo1mIters;
 }
 
+}
+
+
+namespace Mandelbulb {
+
+int Iterations;
+float Power;
+float Bailout;
+bool AlternateVersion;
+glm::vec3 RotVector;
+float RotAngle;
+bool Julia;
+glm::vec3 JuliaC;
+
+glm::mat3 rot;
+
+void init() {
+  rot = glm::mat3_cast(glm::angleAxis(RotAngle, normalize(RotVector)));
+}
+
+void powN1(glm::vec3& z, float r, float& dr) {
+	// extract polar coordinates
+	float theta = glm::acos(z.z/r);
+	float phi = glm::atan(z.y,z.x);
+	dr =  glm::pow( r, Power-1.0)*Power*dr + 1.0;
+	
+	// scale and rotate the point
+	float zr = glm::pow( r,Power);
+	theta = theta*Power;
+	phi = phi*Power;
+	
+	// convert back to cartesian coordinates
+	z = zr*glm::vec3(glm::sin(theta)*glm::cos(phi), glm::sin(phi)*glm::sin(theta), glm::cos(theta));
+}
+
+void powN2(glm::vec3& z, float zr0, float& dr) {
+	float zo0 = glm::asin( z.z/zr0 );
+	float zi0 = glm::atan( z.y,z.x );
+	float zr = glm::pow( zr0, Power-1.0 );
+	float zo = zo0 * Power;
+	float zi = zi0 * Power;
+	dr = zr*dr*Power + 1.0;
+	zr *= zr0;
+	z  = zr*glm::vec3( glm::cos(zo)*glm::cos(zi), glm::cos(zo)*glm::sin(zi), glm::sin(zo) );
+}
+
+float distance(const glm::vec3& pos) {
+	glm::vec3 z=pos;
+	float r;
+	float dr=1.0;
+	int i=0;
+	r=glm::length(z);
+	while(r<Bailout && (i<Iterations)) {
+		if (AlternateVersion) {
+			powN2(z,r,dr);
+		} else {
+			powN1(z,r,dr);
+		}
+		z+=(Julia ? JuliaC : pos);
+		r=glm::length(z);
+		z = z * rot;
+		i++;
+	}
+//	if ((type==1) && r<Bailout) return 0.0;
+	return 0.5*glm::log(r)*r/dr;
+	/*
+	Use this code for some nice intersections (Power=2)
+	float a =  max(0.5*log(r)*r/dr, abs(pos.y));
+	float b = 1000;
+	if (pos.y>0)  b = 0.5*log(r)*r/dr;
+	return min(min(a, b),
+		max(0.5*log(r)*r/dr, abs(pos.z)));
+	*/
+}
 }
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Julia::distance(p);
+  float d = Mandelbulb::distance(p);
   // d = glm::min(d, Plane::distance(p - glm::vec3(0, -1.5, 0)));
   return d;
 }
@@ -372,13 +447,13 @@ glm::vec3 getSample(const glm::vec3& dir) {
 glm::vec3 pathtrace(const Info& info, const int nest,
                     const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   // レイマーチで交差点を調べる
-  float total_distance = 0.0f;
+  float td = 0.0f;
   glm::vec3 pos_on_ray;
   bool hit = false;
   for(int i = 0; !hit && i < info.iterate; ++i) {
-    pos_on_ray = ray_origin + ray_dir * total_distance;
+    pos_on_ray = ray_origin + ray_dir * td;
     float d = getDistance(pos_on_ray);
-    total_distance += d;
+    td += d;
 
     hit = glm::abs(d) < 0.001f;
   }
@@ -387,10 +462,11 @@ glm::vec3 pathtrace(const Info& info, const int nest,
     glm::vec3 normal = getNormal(pos_on_ray);
 
     glm::vec3 new_ray_dir = glm::reflect(ray_dir, normal);
-    glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * 0.001f;
+    // glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * 0.001f;
 
-    float shadow = genShadow(new_pos_on_ray + normal * 0.001f, normal);
+    float shadow = genShadow(pos_on_ray + normal * 0.001f, normal);
     glm::vec3 color = IBL(info, normal);
+    // glm::vec3 color = glm::vec3(1);
     
     return color * shadow;
   }
@@ -412,7 +488,7 @@ void render(const Info& info, std::vector<glm::vec3>& pixel) {
 
       glm::vec2 pos = (coord.xy() * 2.0f - info.resolution) / info.resolution.y;
       glm::vec3 ray_dir = glm::normalize(info.cam_side * pos.x + info.cam_up * pos.y + info.cam_dir * info.focus);
-
+      
       glm::vec3 color = pathtrace(info, 0, ray_dir, info.cam_pos);
       pixel[x + y * info.iresolution.x] = color;
     }
@@ -513,6 +589,21 @@ int main() {
 
     Mandelbox::init();
   }
+
+  // Mandelbulb集合
+  {
+    const auto params = settings.get("Mandelbulb");
+
+    Mandelbulb::Iterations       = params.get("Iterations").get<double>();
+    Mandelbulb::Power            = params.get("Power").get<double>();
+    Mandelbulb::Bailout          = params.get("Bailout").get<double>();
+    Mandelbulb::AlternateVersion = params.get("AlternateVersion").get<bool>();
+    Mandelbulb::RotVector        = getVec<glm::vec3>(params.get("RotVector"));
+    Mandelbulb::RotAngle         = glm::radians(params.get("RotAngle").get<double>());
+    Mandelbulb::Julia            = params.get("Julia").get<bool>();
+    Mandelbulb::JuliaC           = getVec<glm::vec3>(params.get("JuliaC"));
+  }
+  
 
   lap_times.push_back(std::chrono::system_clock::now());
 

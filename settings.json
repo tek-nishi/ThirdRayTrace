@@ -1,8 +1,8 @@
 {
   "resolution": [ 800, 600 ],
 
-  "cam_pos": [ 0.0, 0.0, 3.0 ],
-  "cam_rot": [ 0, -30.0, 0.0 ],
+  "cam_pos": [ 0.0, 0.0, 2.0 ],
+  "cam_rot": [ 30.0, -30.0, 0.0 ],
   
   "focus": 1.5,
 
@@ -14,7 +14,7 @@
   "diffuse": [ 0.8, 0.8, 0.8 ],
   "specular": [ 0.0, 0.0, 0.0 ],
   
-  "iterate": 150,
+  "iterate": 100,
   "nest":    1,
   "path_trace": 1,
 
@@ -37,6 +37,18 @@
     "Scale": 3,
     "RotVector": [ 0, 1, 0 ],
     "RotAngle": 0
+  },
+
+  "Mandelbulb": {
+    "Iterations": 5,
+    "Power": 6,
+    "Bailout": 5,
+    "AlternateVersion": false,
+    "RotVector": [ 0, 1, 0 ],
+    "RotAngle": 0,
+
+    "Julia": true,
+    "JuliaC": [ 0.144, -0.55, 1.04 ]
   },
   
   "exposure": -2.5
