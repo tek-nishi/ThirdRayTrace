@@ -1,6 +1,9 @@
 {
   "resolution": [ 500, 500 ],
 
+  "render_interval": 5,
+  "render_duration": 15,
+  
   "cam_pos": [ 0.0, 0.0, 3.0 ],
   "cam_rot": [ -55.0, 0.0, 0.0 ],
   
@@ -23,6 +26,9 @@
     "coef":      0.35,
     "power":     8
   },
+  
+  "exposure": -2.5,
+
   
   "julia": {
     "iterations": 8,
@@ -59,7 +65,5 @@
     "RotNumeratorY": 2,
     "RotDenominator": 3,
     "Rotations": 5
-  },
-  
-  "exposure": -2.5
+  }
 }
