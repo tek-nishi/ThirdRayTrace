@@ -1,25 +1,21 @@
 {
-  "resolution": [ 500, 500 ],
+  "resolution": [ 600, 480 ],
 
   "render_interval": 5,
   "render_duration": 15,
   
-  "cam_pos": [ 0.0, 0.0, 3.0 ],
-  "cam_rot": [ -55.0, 0.0, 0.0 ],
+  "cam_pos": [ 0.0, 0.0, 2.0 ],
+  "cam_rot": [ -30.0, -20.0, 0.0 ],
   
   "focus": 1.5,
 
-  "light_dir": [-0.577, 0.577, 0.577],
-
-  "bg": "07.hdr",
+  "bg": "ibl5.hdr",
 
   "alpha": 1.0,
   "diffuse": [ 0.8, 0.8, 0.8 ],
   "specular": [ 0.0, 0.0, 0.0 ],
   
   "iterate": 50,
-  "nest":    1,
-  "path_trace": 1,
 
   "shadow": {
     "iteration": 16,
@@ -53,7 +49,7 @@
     "RotVector": [ 0, 1, 0 ],
     "RotAngle": 0,
 
-    "Julia": true,
+    "Julia": false,
     "JuliaC": [ 0.144, -0.55, 1.04 ]
   },
 

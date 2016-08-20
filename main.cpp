@@ -282,7 +282,7 @@ float distance(const glm::vec3& p) {
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Knot::distance(p);
+  float d = Mandelbulb::distance(p);
   return d;
 }
 
