@@ -15,28 +15,20 @@
 #include <sstream>
 #include <iomanip>
 #include <thread>
+#include <future>
 
 #include <picojson.h>
 
 #define GLM_SWIZZLE
 #define GLM_META_PROG_HELPERS
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "misc.hpp"
-
-
-
-
-// レンダリングに必要な情報
-struct RenderParams {
-  picojson::value settings;
-
-  glm::ivec2 iresolution;
-  glm::vec2  resolution;
-
-  std::vector<glm::vec3> pixel;
-  
-};
+#include "render.hpp"
 
 
 int main() {
@@ -46,6 +38,7 @@ int main() {
   // 起動時間を保持
   auto begin_time = std::chrono::system_clock::now();
 
+  // TIPS:値をスレッド間で共有するのでスマポを利用
   auto params = std::make_shared<RenderParams>();
   
   // セッティング
@@ -61,13 +54,19 @@ int main() {
 
   // レンダリング結果格納先
   params->pixel.resize(params->iresolution.x * params->iresolution.y);
+  params->complete = false;
   
   // 一定間隔で進捗を書き出す時間と、レンダリング総時間
   auto sleep_duration = std::chrono::seconds(int(params->settings.get("render_interval").get<double>()));
   int render_duration = params->settings.get("render_duration").get<double>();
 
-  // 残りの設定はレンダーで
-
+  // レンダリング用スレッド開始
+  {
+    std::packaged_task<void()> task(std::bind(render, params));
+    auto future = task.get_future();
+    std::thread render_thread{ std::move(task) };
+    render_thread.detach();
+  }
   
   size_t index = 0;
   while (1) {
@@ -78,8 +77,8 @@ int main() {
     auto current_time = std::chrono::system_clock::now();
     auto duration     = std::chrono::duration_cast<std::chrono::seconds>(current_time - begin_time).count();
 
-    // 一定時間経過でレンダリング終了
-    if (duration > render_duration) break;
+    // 一定時間経過かレンダリング完了報告でループを終了
+    if (duration > render_duration || params->complete) break;
     
     // 進捗を書き出す
     std::ostringstream path;
