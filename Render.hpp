@@ -48,8 +48,13 @@ float* ibl_image;
 int bg_x, bg_y, bg_comp;
 glm::vec2 texture;
 
+float glow;
+float glow_max;
+glm::vec3 glow_color;
+
 int iterate;
 float min_dist;
+float max_dist;
 
 int shadowIteration = 32;
 int shadowMinDist;
@@ -105,14 +110,22 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   float td = 0.0f;
   glm::vec3 pos_on_ray;
   bool hit = false;
+  float steps = 0.0f;
   for(int i = 0; !hit && i < Info::iterate; ++i) {
     pos_on_ray = ray_origin + ray_dir * td;
     float d = getDistance(pos_on_ray);
     td += d;
+    steps += 1.0f;
 
     hit = glm::abs(d) < Info::min_dist;
+    if (td > Info::max_dist) {
+      steps -= (td - Info::max_dist) / d;
+      break;
+    }
   }
 
+  float step_factor = glm::clamp(steps / Info::glow_max, 0.0f, 1.0f);
+  
   if (hit) {
     glm::vec3 normal = getNormal(pos_on_ray);
 
@@ -127,7 +140,8 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   }
   else {
     // どこにも衝突しなかった
-    return IBL(ray_dir);
+    return Info::glow_color * Info::glow * step_factor;
+    // return IBL(ray_dir) + Info::glow_color * Info::glow * step_factor;
   }
 }
 
@@ -157,9 +171,15 @@ void render(const std::shared_ptr<RenderParams>& params) {
   Info::focal_distance = params->settings.get("focal_distance").get<double>();
   Info::lens_radius    = params->settings.get("lens_radius").get<double>();
 
+  // 光彩
+  Info::glow       = params->settings.get("glow").get<double>();
+  Info::glow_max   = params->settings.get("glow_max").get<double>();
+  Info::glow_color = getVec<glm::vec3>(params->settings.get("glow_color"));
+  
   // 反復数
   Info::iterate  = params->settings.get("iterate").get<double>();
   Info::min_dist = glm::pow(10.0, params->settings.get("detail").get<double>());
+  Info::max_dist = params->settings.get("max_dist").get<double>();
 
   // 影
   {

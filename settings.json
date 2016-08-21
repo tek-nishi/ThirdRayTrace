@@ -17,9 +17,14 @@
   "alpha": 1.0,
   "diffuse": [ 0.8, 0.8, 0.8 ],
   "specular": [ 0.0, 0.0, 0.0 ],
+
+  "glow": 1.0,
+  "glow_max": 150,
+  "glow_color": [ 1.0, 1.0, 0.5 ],
   
   "iterate": 50,
-  "detail": -3,
+  "detail": -2.5,
+  "max_dist": 1000,
 
   "shadow": {
     "iteration": 16,
