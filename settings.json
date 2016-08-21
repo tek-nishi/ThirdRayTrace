@@ -14,13 +14,21 @@
   
   "bg": "ibl5.hdr",
 
-  "alpha": 1.0,
-  "diffuse": [ 0.8, 0.8, 0.8 ],
-  "specular": [ 0.0, 0.0, 0.0 ],
+  "Specular": 0,
+  "SpecularExp": 0,
+  "SpecularMax": 10,
 
-  "glow": 1.0,
+  "SpotLight": 0.0,
+  "SpotLightColor": [ 1, 1, 1 ],
+  "SpotLightDir": [ 0, 1, 0 ],
+  
+  "CamLight": 1,
+  "CamLightColor": [ 1, 1, 1 ],
+  "CamLightMin": 0.5,
+
+  "glow": 0.7,
   "glow_max": 150,
-  "glow_color": [ 1.0, 1.0, 0.5 ],
+  "glow_color": [ 1.0, 1.0, 1.0 ],
   
   "iterate": 50,
   "detail": -2.5,
@@ -28,9 +36,9 @@
 
   "shadow": {
     "iteration": 16,
-    "detail":    -4,
+    "detail":    -3,
     "coef":      0.35,
-    "power":     8
+    "power":     4
   },
   
   "exposure": -2.5,

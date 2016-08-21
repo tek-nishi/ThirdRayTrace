@@ -48,9 +48,18 @@ float* ibl_image;
 int bg_x, bg_y, bg_comp;
 glm::vec2 texture;
 
-float glow;
 float glow_max;
 glm::vec3 glow_color;
+
+float Specular;
+float SpecularExp;
+float SpecularMax;
+
+glm::vec3 SpotLightColor;
+glm::vec3 SpotLightDir;
+
+glm::vec3 CamLightColor;
+float CamLightMin;
 
 int iterate;
 float min_dist;
@@ -97,6 +106,27 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
 }
 
 
+glm::vec3 lighting(const glm::vec3& n, const glm::vec3& color, const glm::vec3& pos, const glm::vec3& dir, const float eps) {
+	float nDotL = glm::max( 0.0f, glm::dot(n, Info::SpotLightDir));
+  glm::vec3 halfVector = glm::normalize(-dir + Info::SpotLightDir);
+	float diffuse = nDotL;
+	float ambient = glm::max(Info::CamLightMin, glm::dot(-n, dir));
+	float hDotN = glm::max(0.0f, glm::dot(n, halfVector));
+
+	// An attempt at Physcical Based Specular Shading:
+	// http://renderwonk.com/publications/s2010-shading-course/
+	// (Blinn-Phong with Schickl term and physical normalization)
+	float specular = ((Info::SpecularExp + 2.0f) / 8.0f)
+    * glm::pow(hDotN, Info::SpecularExp)
+    * (Info::SpecularExp + (1.0f - Info::SpecularExp) * glm::pow(1.0 - hDotN, 5.0f))
+    * nDotL
+    * Info::Specular;
+	specular = glm::min(Info::SpecularMax, specular);
+
+	return (Info::SpotLightColor * diffuse + Info::CamLightColor * ambient + Info::SpotLightColor * specular) * color;
+}
+
+
 // 正規化ベクトルから画素を取り出す
 glm::vec3 IBL(const glm::vec3& v) {
   glm::vec2 uv = glm::clamp(vec3ToUV(v) * Info::texture, glm::vec2(0.0f, 0.0f), Info::texture);
@@ -133,31 +163,26 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
     // glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * 0.001f;
 
     float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
-    glm::vec3 color = IBL(normal);
-    // glm::vec3 color = glm::vec3(1);
+    // glm::vec3 color = IBL(normal);
+    glm::vec3 color = glm::vec3(1);
     
     return color * shadow;
   }
   else {
     // どこにも衝突しなかった
-    return Info::glow_color * Info::glow * step_factor;
-    // return IBL(ray_dir) + Info::glow_color * Info::glow * step_factor;
+    return Info::glow_color * step_factor;
+    // return IBL(ray_dir) + Info::glow_color * step_factor;
   }
 }
 
 
-void render(const std::shared_ptr<RenderParams>& params) {
-  // TIPS:スレッド間で共有している値へのアクセスは重たいので
-  //      必要な値はコピーしておく
-  Info::iresolution = params->iresolution;
-  Info::resolution  = params->resolution;
-  
+void setupParams(const picojson::value& settings) {
   // カメラ
-  glm::vec3 cam_rot = glm::radians(getVec<glm::vec3>(params->settings.get("cam_rot")));
+  glm::vec3 cam_rot = glm::radians(getVec<glm::vec3>(settings.get("cam_rot")));
   glm::mat4 transform = glm::rotate(cam_rot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
     glm::rotate(cam_rot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
     glm::rotate(cam_rot.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
-    glm::translate(getVec<glm::vec3>(params->settings.get("cam_pos")));
+    glm::translate(getVec<glm::vec3>(settings.get("cam_pos")));
     
   Info::cam_pos  = (transform * glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }).xyz();
   Info::cam_dir  = (transform * glm::vec4{ 0.0f, 0.0f, -1.0f, 0.0f }).xyz();
@@ -165,25 +190,46 @@ void render(const std::shared_ptr<RenderParams>& params) {
   Info::cam_side = glm::cross(Info::cam_dir, Info::cam_up);
 
   // 焦点距離
-  Info::focus = params->settings.get("focus").get<double>();
+  Info::focus = settings.get("focus").get<double>();
 
   // DOF
-  Info::focal_distance = params->settings.get("focal_distance").get<double>();
-  Info::lens_radius    = params->settings.get("lens_radius").get<double>();
+  Info::focal_distance = settings.get("focal_distance").get<double>();
+  Info::lens_radius    = settings.get("lens_radius").get<double>();
 
   // 光彩
-  Info::glow       = params->settings.get("glow").get<double>();
-  Info::glow_max   = params->settings.get("glow_max").get<double>();
-  Info::glow_color = getVec<glm::vec3>(params->settings.get("glow_color"));
+  {
+    Info::glow_max   = settings.get("glow_max").get<double>();
+    float glow       = settings.get("glow").get<double>();
+    Info::glow_color = getVec<glm::vec3>(settings.get("glow_color")) * glow;
+  }
+
+  // ライティング
+  {
+    Info::Specular    = settings.get("Specular").get<double>();
+    Info::SpecularExp = settings.get("SpecularExp").get<double>();
+    Info::SpecularMax = settings.get("SpecularMax").get<double>();
   
+    float SpotLight      = settings.get("SpotLight").get<double>();
+    Info::SpotLightColor = getVec<glm::vec3>(settings.get("SpotLightColor")) * SpotLight;
+    glm::vec3 dir        = getVec<glm::vec3>(settings.get("SpotLightDir"));
+    glm::vec3 spot_dir   = glm::vec3(glm::sin(dir.x * M_PI) * glm::cos(dir.y * M_PI / 2.0f),
+                                     glm::sin(dir.y * M_PI / 2.0f) * glm::sin(dir.x * M_PI),
+                                     glm::cos(dir.x * M_PI));
+    Info::SpotLightDir   = glm::normalize(spot_dir);
+
+    float CamLight      = settings.get("CamLight").get<double>();
+    Info::CamLightColor = getVec<glm::vec3>(settings.get("CamLightColor")) * CamLight;
+    Info::CamLightMin   = settings.get("CamLightMin").get<double>();
+  }
+
   // 反復数
-  Info::iterate  = params->settings.get("iterate").get<double>();
-  Info::min_dist = glm::pow(10.0, params->settings.get("detail").get<double>());
-  Info::max_dist = params->settings.get("max_dist").get<double>();
+  Info::iterate  = settings.get("iterate").get<double>();
+  Info::min_dist = glm::pow(10.0, settings.get("detail").get<double>());
+  Info::max_dist = settings.get("max_dist").get<double>();
 
   // 影
   {
-    const auto& p = params->settings.get("shadow");
+    const auto& p = settings.get("shadow");
 
     Info::shadowIteration = p.get("iteration").get<double>();
     Info::shadowMinDist   = glm::pow(10.0, p.get("detail").get<double>());
@@ -191,23 +237,21 @@ void render(const std::shared_ptr<RenderParams>& params) {
     Info::shadowPower     = p.get("power").get<double>();
   }
 
+  Torus::init(settings.get("Torus"));
+  Mandelbulb::init(settings.get("Mandelbulb"));
+}
 
-  // Torus
-  {
-    const auto& p = params->settings.get("Torus");
-    Torus::init(p);
-  }
+void render(const std::shared_ptr<RenderParams>& params) {
+  // TIPS:スレッド間で共有している値へのアクセスは重たいので
+  //      必要な値はコピーしておく
+  Info::iresolution = params->iresolution;
+  Info::resolution  = params->resolution;
   
-  // Mandelbulb集合
-  {
-    const auto& p = params->settings.get("Mandelbulb");
-    Mandelbulb::init(p);
-  }
-
+  setupParams(params->settings);
   
   // IBL用画像
   Info::ibl_image = stbi_loadf(params->settings.get("bg").get<std::string>().c_str(), &Info::bg_x, &Info::bg_y, &Info::bg_comp, 0);
-  Info::texture = glm::vec2(Info::bg_x - 1, Info::bg_y - 1);
+  Info::texture   = glm::vec2(Info::bg_x - 1, Info::bg_y - 1);
 
 
   // 無限ループw
