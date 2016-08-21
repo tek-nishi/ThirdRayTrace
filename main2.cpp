@@ -91,7 +91,10 @@ int main() {
 
     std::cout << path.str() << std::endl;
   }
- 
+
+  // ポストプロセス
+  
+  
   // 最終結果を書き出す
   float exposure = params->settings.get("exposure").get<double>();
   writeFinalImage("Result.bmp", params->pixel, params->iresolution.x, params->iresolution.y, exposure);

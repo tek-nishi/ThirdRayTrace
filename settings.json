@@ -16,9 +16,11 @@
   "specular": [ 0.0, 0.0, 0.0 ],
   
   "iterate": 50,
+  "detail": -3,
 
   "shadow": {
     "iteration": 16,
+    "detail":    -3,
     "coef":      0.35,
     "power":     8
   },

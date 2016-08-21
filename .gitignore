@@ -1,3 +1,5 @@
 warehouse/
 a.out
-test.png
+*.png
+*.hdr
+*.bmp
