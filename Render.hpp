@@ -74,7 +74,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Torus::distance(p);
+  float d = Mandelbulb::distance(p);
   return d;
 }
 
@@ -106,7 +106,7 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
 }
 
 
-glm::vec3 lighting(const glm::vec3& n, const glm::vec3& color, const glm::vec3& pos, const glm::vec3& dir, const float eps) {
+glm::vec3 lighting(const glm::vec3& n, const glm::vec3& color, const glm::vec3& pos, const glm::vec3& dir) {
 	float nDotL = glm::max( 0.0f, glm::dot(n, Info::SpotLightDir));
   glm::vec3 halfVector = glm::normalize(-dir + Info::SpotLightDir);
 	float diffuse = nDotL;
@@ -164,14 +164,14 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
 
     float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
     // glm::vec3 color = IBL(normal);
-    glm::vec3 color = glm::vec3(1);
+    glm::vec3 color = lighting(normal, IBL(normal), pos_on_ray, ray_dir);
     
     return color * shadow;
   }
   else {
     // どこにも衝突しなかった
-    return Info::glow_color * step_factor;
-    // return IBL(ray_dir) + Info::glow_color * step_factor;
+    // return Info::glow_color * step_factor;
+    return IBL(ray_dir) + Info::glow_color * step_factor;
   }
 }
 
@@ -211,9 +211,9 @@ void setupParams(const picojson::value& settings) {
   
     float SpotLight      = settings.get("SpotLight").get<double>();
     Info::SpotLightColor = getVec<glm::vec3>(settings.get("SpotLightColor")) * SpotLight;
-    glm::vec3 dir        = getVec<glm::vec3>(settings.get("SpotLightDir"));
-    glm::vec3 spot_dir   = glm::vec3(glm::sin(dir.x * M_PI) * glm::cos(dir.y * M_PI / 2.0f),
-                                     glm::sin(dir.y * M_PI / 2.0f) * glm::sin(dir.x * M_PI),
+    glm::vec2 dir        = getVec<glm::vec2>(settings.get("SpotLightDir"));
+    glm::vec3 spot_dir   = glm::vec3(glm::sin(dir.x * M_PI) * glm::cos(dir.y * M_PI / 2.0),
+                                     glm::sin(dir.y * M_PI / 2.0) * glm::sin(dir.x * M_PI),
                                      glm::cos(dir.x * M_PI));
     Info::SpotLightDir   = glm::normalize(spot_dir);
 
@@ -256,7 +256,7 @@ void render(const std::shared_ptr<RenderParams>& params) {
 
   // 無限ループw
   params->render_num = 0;
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; ; ++i) {
     // レンダリング回数から、新しい色の影響力を決める
     float d = 1.0f / float(i + 1);
     
