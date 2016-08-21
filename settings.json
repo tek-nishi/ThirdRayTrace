@@ -1,14 +1,17 @@
 {
-  "resolution": [ 600, 480 ],
+  "resolution": [ 800, 600 ],
 
-  "render_interval": 5,
-  "render_duration": 15,
+  "render_interval": 30,
+  "render_duration": 120,
   
   "cam_pos": [ 0.0, 0.0, 2.0 ],
-  "cam_rot": [ -30.0, -20.0, 0.0 ],
+  "cam_rot": [ 30.0, -30.0, 0.0 ],
   
   "focus": 1.5,
 
+  "focal_distance": 1.3,
+  "lens_radius": 0.04,
+  
   "bg": "ibl5.hdr",
 
   "alpha": 1.0,
@@ -20,13 +23,18 @@
 
   "shadow": {
     "iteration": 16,
-    "detail":    -3,
+    "detail":    -4,
     "coef":      0.35,
     "power":     8
   },
   
   "exposure": -2.5,
 
+
+  "Torus": {
+    "outer_radius": 0.75,
+    "inner_radius": 0.25
+  },
   
   "julia": {
     "iterations": 8,

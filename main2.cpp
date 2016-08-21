@@ -27,8 +27,9 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "misc.hpp"
-#include "render.hpp"
+#include "Misc.hpp"
+#include "Render.hpp"
+#include "PostProcess.hpp"
 
 
 int main() {
@@ -54,8 +55,6 @@ int main() {
 
   // レンダリング結果格納先
   params->pixel.resize(params->iresolution.x * params->iresolution.y);
-  params->normal.resize(params->iresolution.x * params->iresolution.y);
-  params->depth.resize(params->iresolution.x * params->iresolution.y);
   params->complete = false;
   
   // 一定間隔で進捗を書き出す時間と、レンダリング総時間
@@ -93,14 +92,14 @@ int main() {
   }
 
   // ポストプロセス
+  float exposure = params->settings.get("exposure").get<double>();
   
   
   // 最終結果を書き出す
-  float exposure = params->settings.get("exposure").get<double>();
-  writeFinalImage("Result.bmp", params->pixel, params->iresolution.x, params->iresolution.y, exposure);
+  // writeFinalImage("Result.bmp", DOF::exec(params->pixel, params->iresolution.x, params->iresolution.y, params->depth),
+  //                 params->iresolution.x, params->iresolution.y, exposure);
 
-  writeProgressImage("Normal.bmp", params->normal, params->iresolution.x, params->iresolution.y);
-  writeDepthImage("Depth.bmp", params->depth, params->iresolution.x, params->iresolution.y);
+  writeFinalImage("Result.bmp", params->pixel, params->iresolution.x, params->iresolution.y, exposure);
   
   std::cout << "Finish!!" << std::endl;
 }

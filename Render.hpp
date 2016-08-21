@@ -10,6 +10,7 @@
 
 #include <limits>
 
+#include "Torus.hpp"
 #include "Mandelbulb.hpp"
 
 
@@ -21,8 +22,6 @@ struct RenderParams {
   glm::vec2  resolution;
 
   std::vector<glm::vec3> pixel;
-  std::vector<glm::vec3> normal;
-  std::vector<float> depth;
   
   bool complete;
 };
@@ -40,6 +39,9 @@ glm::vec3 cam_up;
 glm::vec3 cam_side;
   
 float focus;
+
+float focal_distance;
+float lens_radius;
 
 float* ibl_image;
 int bg_x, bg_y, bg_comp;
@@ -97,7 +99,7 @@ glm::vec3 IBL(const glm::vec3& v) {
 }
 
 
-std::tuple<glm::vec3, glm::vec3, float> trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
+glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   // レイマーチで交差点を調べる
   float td = 0.0f;
   glm::vec3 pos_on_ray;
@@ -116,15 +118,15 @@ std::tuple<glm::vec3, glm::vec3, float> trace(const glm::vec3& ray_dir, const gl
     // glm::vec3 new_ray_dir = glm::reflect(ray_dir, normal);
     // glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * 0.001f;
 
-    float shadow = genShadow(pos_on_ray + normal * 0.001f, normal);
+    float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
     glm::vec3 color = IBL(normal);
     // glm::vec3 color = glm::vec3(1);
     
-    return std::make_tuple(color * shadow, normal, td);
+    return color * shadow;
   }
   else {
     // どこにも衝突しなかった
-    return std::make_tuple(IBL(ray_dir), glm::vec3(0.0f), std::numeric_limits<float>::max());
+    return IBL(ray_dir);
   }
 }
 
@@ -150,6 +152,10 @@ void render(const std::shared_ptr<RenderParams>& params) {
   // 焦点距離
   Info::focus = params->settings.get("focus").get<double>();
 
+  // DOF
+  Info::focal_distance = params->settings.get("focal_distance").get<double>();
+  Info::lens_radius    = params->settings.get("lens_radius").get<double>();
+
   // 反復数
   Info::iterate  = params->settings.get("iterate").get<double>();
   Info::min_dist = glm::pow(10.0, params->settings.get("detail").get<double>());
@@ -164,6 +170,12 @@ void render(const std::shared_ptr<RenderParams>& params) {
     Info::shadowPower     = p.get("power").get<double>();
   }
 
+
+  // Torus
+  {
+    const auto& p = params->settings.get("Torus");
+    Torus::init(p);
+  }
   
   // Mandelbulb集合
   {
@@ -176,24 +188,37 @@ void render(const std::shared_ptr<RenderParams>& params) {
   Info::ibl_image = stbi_loadf(params->settings.get("bg").get<std::string>().c_str(), &Info::bg_x, &Info::bg_y, &Info::bg_comp, 0);
   Info::texture = glm::vec2(Info::bg_x - 1, Info::bg_y - 1);
 
-  
-  // 全ピクセルでレイマーチ
-  for (int y = 0; y < Info::iresolution.y; ++y) {
-    glm::vec2 coord;
-    coord.y = (Info::iresolution.y - 1) - y;
-    
-    for (int x = 0; x < Info::iresolution.x; ++x) {
-      coord.x = x;
 
-      glm::vec2 pos = (coord.xy() * 2.0f - Info::resolution) / Info::resolution.y;
-      glm::vec3 ray_dir = glm::normalize(Info::cam_side * pos.x + Info::cam_up * pos.y + Info::cam_dir * Info::focus);
-      
-      auto results = trace(ray_dir, Info::cam_pos);
-      
-      size_t offset = x + y * Info::iresolution.x;
-      params->pixel[offset]  = std::get<0>(results);
-      params->normal[offset] = std::get<1>(results);
-      params->depth[offset]  = std::get<2>(results);
+  // 無限ループw
+  for (int i = 0; ; ++i) {
+    // 全ピクセルでレイマーチ
+    for (int y = 0; y < Info::iresolution.y; ++y) {
+      glm::vec2 coord;
+      coord.y = (Info::iresolution.y - 1) - y;
+    
+      for (int x = 0; x < Info::iresolution.x; ++x) {
+        coord.x = x;
+
+        glm::vec2 pos = (coord.xy() * 2.0f - Info::resolution) / Info::resolution.y;
+        glm::vec3 ray_dir = glm::normalize(Info::cam_side * pos.x + Info::cam_up * pos.y + Info::cam_dir * Info::focus);
+
+        // レンズの屈折をシミュレーション(被写界深度)
+        // SOURCE:https://github.com/githole/simple-pathtracer/tree/simple-pathtracer-DOF
+
+        // フォーカスが合う位置
+        float ft = glm::abs(Info::focal_distance / glm::dot(Info::cam_dir, ray_dir));
+        glm::vec3 focus_pos = Info::cam_pos + ray_dir * ft;
+
+        // 適当に決めたレンズの通過位置とフォーカスが合う位置からRayを作り直す(屈折効果)
+        glm::vec2 lens = glm::gaussRand(glm::vec2(-1), glm::vec2(1)) * Info::lens_radius;
+        glm::vec3 ray_origin = glm::vec3(Info::cam_side * lens.x + Info::cam_up * lens.y) + Info::cam_pos;
+        ray_dir = glm::normalize(focus_pos - ray_origin);
+
+        int offset = x + y * Info::iresolution.x;
+        // レンダリング回数から、新しい色の影響力を決める
+        float d = 1.0f / float(i + 1);
+        params->pixel[offset] = glm::mix(params->pixel[offset], trace(ray_dir, ray_origin), d);
+      }
     }
   }
 
