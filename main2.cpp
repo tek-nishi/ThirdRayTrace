@@ -92,14 +92,12 @@ int main() {
   }
 
   // ポストプロセス
-  float exposure = params->settings.get("exposure").get<double>();
+  Expose::value = params->settings.get("exposure").get<double>();
+  auto pixel = Expose::process(params->pixel);
   
   
   // 最終結果を書き出す
-  // writeFinalImage("Result.bmp", DOF::exec(params->pixel, params->iresolution.x, params->iresolution.y, params->depth),
-  //                 params->iresolution.x, params->iresolution.y, exposure);
-
-  writeFinalImage("Result.bmp", params->pixel, params->iresolution.x, params->iresolution.y, exposure);
+  writeFinalImage("Result.bmp", pixel, params->iresolution.x, params->iresolution.y);
   
-  std::cout << "Finish!!" << std::endl;
+  std::cout << "Finish!! (" << params->render_num << " times renderd)" << std::endl;
 }

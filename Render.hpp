@@ -22,7 +22,8 @@ struct RenderParams {
   glm::vec2  resolution;
 
   std::vector<glm::vec3> pixel;
-  
+
+  int render_num;
   bool complete;
 };
 
@@ -59,7 +60,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbulb::distance(p);
+  float d = Torus::distance(p);
   return d;
 }
 
@@ -190,7 +191,11 @@ void render(const std::shared_ptr<RenderParams>& params) {
 
 
   // 無限ループw
-  for (int i = 0; ; ++i) {
+  params->render_num = 0;
+  for (int i = 0; i < 1; ++i) {
+    // レンダリング回数から、新しい色の影響力を決める
+    float d = 1.0f / float(i + 1);
+    
     // 全ピクセルでレイマーチ
     for (int y = 0; y < Info::iresolution.y; ++y) {
       glm::vec2 coord;
@@ -215,13 +220,12 @@ void render(const std::shared_ptr<RenderParams>& params) {
         ray_dir = glm::normalize(focus_pos - ray_origin);
 
         int offset = x + y * Info::iresolution.x;
-        // レンダリング回数から、新しい色の影響力を決める
-        float d = 1.0f / float(i + 1);
         params->pixel[offset] = glm::mix(params->pixel[offset], trace(ray_dir, ray_origin), d);
       }
     }
+    
+    params->render_num += 1;
   }
-
   
   // レンダリング完了!!
   params->complete = true;

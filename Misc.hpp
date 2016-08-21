@@ -31,13 +31,6 @@ T getVec(const picojson::value& values) {
 }
 
 
-// 露出計算
-// exposure 露出値(マイナス値)
-glm::vec3 expose(const glm::vec3& light, const float exposure) {
-  return glm::vec3(1.0f) - glm::exp(light * exposure);
-}
-
-
 // 途中結果を書き出す
 void writeProgressImage(const std::string& path,
                         const std::vector<glm::vec3>& pixel, const int width, const int height) {
@@ -61,11 +54,10 @@ void writeDepthImage(const std::string& path,
 
 // 最終結果を書き出す
 void writeFinalImage(const std::string& path,
-                     const std::vector<glm::vec3>& pixel, const int width, const int height,
-                     const float exposure) {
+                     const std::vector<glm::vec3>& pixel, const int width, const int height) {
   std::vector<glm::u8vec3> bitmap(width * height);
   for (size_t i = 0; i < pixel.size(); ++i) {
-    bitmap[i] = glm::u8vec3(glm::clamp(expose(pixel[i], exposure) * 255.0f, 0.0f, 255.0f));
+    bitmap[i] = glm::u8vec3(glm::clamp(pixel[i] * 255.0f, 0.0f, 255.0f));
   }
   
   stbi_write_bmp(path.c_str(), width, height, COMPONENTS, bitmap.data());
