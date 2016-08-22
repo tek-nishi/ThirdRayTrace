@@ -58,8 +58,9 @@ int main() {
   params->complete = false;
   
   // 一定間隔で進捗を書き出す時間と、レンダリング総時間
-  auto sleep_duration = std::chrono::seconds(int(params->settings.get("render_interval").get<double>()));
-  int render_duration = params->settings.get("render_duration").get<double>();
+  auto sleep_duration     = std::chrono::seconds(int64_t(params->settings.get("render_interval").get<double>()));
+  int64_t render_duration = params->settings.get("render_duration").get<double>();
+  auto end_time           = begin_time + std::chrono::seconds(render_duration);
 
   // レンダリング用スレッド開始
   {
@@ -72,14 +73,18 @@ int main() {
   size_t index = 0;
   while (1) {
     // 指定時間スリープ
-    std::this_thread::sleep_for(sleep_duration);    
+    // 残り時間が少ない時は、時間を短く
+    {
+      auto remain_time = end_time - std::chrono::system_clock::now();
+      std::this_thread::sleep_for(remain_time < sleep_duration ? remain_time
+                                                               : sleep_duration);
+    }
 
     // 起動からの経過時間を取得
     auto current_time = std::chrono::system_clock::now();
-    auto duration     = std::chrono::duration_cast<std::chrono::seconds>(current_time - begin_time).count();
 
     // 一定時間経過かレンダリング完了報告でループを終了
-    if (duration > render_duration || params->complete) break;
+    if ((current_time >= end_time) || params->complete) break;
     
     // 進捗を書き出す
     std::ostringstream path;
@@ -98,6 +103,13 @@ int main() {
   
   // 最終結果を書き出す
   writeFinalImage("Result.bmp", pixel, params->iresolution.x, params->iresolution.y);
+
+  // レンダリング時間と回数を表示
+  auto current_time = std::chrono::system_clock::now();
+  std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - begin_time);
   
-  std::cout << "Finish!! (" << params->render_num << " times renderd)" << std::endl;
+  std::cout << "Finish!! "
+            << duration.count() << " sec. "
+            << params->render_num << " times renderd."
+            << std::endl;
 }
