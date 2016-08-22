@@ -3,6 +3,7 @@
 
   "render_interval": 3,
   "render_duration": 10,
+  "render_iterate": 1,
   
   "cam_pos": [ 0.0, 0.0, 3.0 ],
   "cam_rot": [ 10.0, 20.0, 0.0 ],

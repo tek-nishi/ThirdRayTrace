@@ -246,18 +246,22 @@ void render(const std::shared_ptr<RenderParams>& params) {
   //      必要な値はコピーしておく
   Info::iresolution = params->iresolution;
   Info::resolution  = params->resolution;
-  
-  setupParams(params->settings);
+
+  // 各種セットアップ
+  const auto& settings = params->settings;
+  setupParams(settings);
   
   // IBL用画像
-  Info::ibl_image = stbi_loadf(params->settings.get("bg").get<std::string>().c_str(), &Info::bg_x, &Info::bg_y, &Info::bg_comp, 0);
+  Info::ibl_image = stbi_loadf(settings.get("bg").get<std::string>().c_str(), &Info::bg_x, &Info::bg_y, &Info::bg_comp, 0);
   Info::texture   = glm::vec2(Info::bg_x - 1, Info::bg_y - 1);
 
-
-  // 無限ループw
+  // レンダリング回数
+  // TIPS:-1で無限ループw
+  int render_iterate = settings.get("render_iterate").get<double>();
   params->render_num = 0;
-  for (int i = 0; ; ++i) {
+  for (int i = 0; i != render_iterate; ++i) {
     // レンダリング回数から、新しい色の影響力を決める
+    // TIPS:ループの内側で変化しない値なので、ここで定義
     float d = 1.0f / float(i + 1);
     
     // 全ピクセルでレイマーチ
