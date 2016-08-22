@@ -97,9 +97,9 @@ int main() {
   }
 
   // ポストプロセス
+  // 露出
   Expose::value = params->settings.get("exposure").get<double>();
   auto pixel = Expose::process(params->pixel);
-  
   
   // 最終結果を書き出す
   writeFinalImage("Result.bmp", pixel, params->iresolution.x, params->iresolution.y);

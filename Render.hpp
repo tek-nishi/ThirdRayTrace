@@ -4,14 +4,12 @@
 // レンダラー
 //
 
-// HDR読み込み
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include <limits>
 
+#include "Texture.hpp"
 #include "Torus.hpp"
 #include "Mandelbulb.hpp"
+#include "Mandelbox.hpp"
 
 
 // レンダリングに必要な情報
@@ -44,9 +42,8 @@ float focus;
 float focal_distance;
 float lens_radius;
 
-float* ibl_image;
-int bg_x, bg_y, bg_comp;
-glm::vec2 texture;
+Texture image_diffuse;
+Texture image_specular;
 
 float glow_max;
 glm::vec3 glow_color;
@@ -74,7 +71,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbulb::distance(p);
+  float d = Mandelbox::distance(p);
   return d;
 }
 
@@ -106,7 +103,10 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
 }
 
 
-glm::vec3 lighting(const glm::vec3& n, const glm::vec3& color, const glm::vec3& pos, const glm::vec3& dir) {
+glm::vec3 lighting(const glm::vec3& n,
+                   const glm::vec3& color_diffuse,
+                   const glm::vec3& color_specular,
+                   const glm::vec3& pos, const glm::vec3& dir) {
 	float nDotL = glm::max( 0.0f, glm::dot(n, Info::SpotLightDir));
   glm::vec3 halfVector = glm::normalize(-dir + Info::SpotLightDir);
 	float diffuse = nDotL;
@@ -123,15 +123,7 @@ glm::vec3 lighting(const glm::vec3& n, const glm::vec3& color, const glm::vec3& 
     * Info::Specular;
 	specular = glm::min(Info::SpecularMax, specular);
 
-	return (Info::SpotLightColor * diffuse + Info::CamLightColor * ambient + Info::SpotLightColor * specular) * color;
-}
-
-
-// 正規化ベクトルから画素を取り出す
-glm::vec3 IBL(const glm::vec3& v) {
-  glm::vec2 uv = glm::clamp(vec3ToUV(v) * Info::texture, glm::vec2(0.0f, 0.0f), Info::texture);
-  int index = (int(uv.x) + int(uv.y) * Info::bg_x) * COMPONENTS;
-  return glm::vec3(Info::ibl_image[index], Info::ibl_image[index + 1], Info::ibl_image[index + 2]);
+	return (Info::SpotLightColor * diffuse + Info::CamLightColor * ambient) * color_diffuse + specular * color_specular;
 }
 
 
@@ -164,14 +156,16 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
 
     float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
     // glm::vec3 color = IBL(normal);
-    glm::vec3 color = lighting(normal, IBL(normal), pos_on_ray, ray_dir);
+    glm::vec3 color = lighting(normal,
+                               Info::image_diffuse.getPixel(normal), Info::image_specular.getPixel(normal),
+                               pos_on_ray, ray_dir);
     
     return color * shadow;
   }
   else {
     // どこにも衝突しなかった
     // return Info::glow_color * step_factor;
-    return IBL(ray_dir) + Info::glow_color * step_factor;
+    return Info::image_diffuse.getPixel(ray_dir) + Info::glow_color * step_factor;
   }
 }
 
@@ -239,6 +233,7 @@ void setupParams(const picojson::value& settings) {
 
   Torus::init(settings.get("Torus"));
   Mandelbulb::init(settings.get("Mandelbulb"));
+  Mandelbox::init(settings.get("Mandelbox"));
 }
 
 void render(const std::shared_ptr<RenderParams>& params) {
@@ -252,9 +247,9 @@ void render(const std::shared_ptr<RenderParams>& params) {
   setupParams(settings);
   
   // IBL用画像
-  Info::ibl_image = stbi_loadf(settings.get("bg").get<std::string>().c_str(), &Info::bg_x, &Info::bg_y, &Info::bg_comp, 0);
-  Info::texture   = glm::vec2(Info::bg_x - 1, Info::bg_y - 1);
-
+  Info::image_diffuse  = Texture(settings.get("image_diffuse").get<std::string>());
+  Info::image_specular = Texture(settings.get("image_specular").get<std::string>());
+  
   // レンダリング回数
   // TIPS:-1で無限ループw
   int render_iterate = settings.get("render_iterate").get<double>();
@@ -297,6 +292,4 @@ void render(const std::shared_ptr<RenderParams>& params) {
   
   // レンダリング完了!!
   params->complete = true;
-  
-  stbi_image_free(Info::ibl_image);
 }

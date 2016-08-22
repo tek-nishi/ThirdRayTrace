@@ -2,7 +2,6 @@
 
 //
 // Mandelbulb集合
-// SOURCE:
 // 
 
 
