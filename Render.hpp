@@ -41,7 +41,11 @@ glm::vec3 cam_pos;
 glm::vec3 cam_dir;
 glm::vec3 cam_up;
 glm::vec3 cam_side;
-  
+
+glm::vec3 Eye;
+glm::vec3 Target;
+glm::vec3 Up;
+
 float focus;
 
 float focal_distance;
@@ -59,6 +63,7 @@ glm::vec3 glow_color;
 float Specular;
 float SpecularExp;
 float SpecularMax;
+glm::vec3 SpecularColor;
 
 glm::vec3 SpotLightColor;
 glm::vec3 SpotLightDir;
@@ -82,7 +87,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbox::distance(p);
+  float d = Sphere::distance(p);
   return d;
 }
 
@@ -134,7 +139,7 @@ glm::vec3 lighting(const glm::vec3& n,
     * Info::Specular;
 	specular = glm::min(Info::SpecularMax, specular);
 
-	return (Info::SpotLightColor * diffuse + Info::CamLightColor * ambient) * color_diffuse + specular * color_specular;
+	return (Info::SpotLightColor * diffuse + Info::CamLightColor * ambient) * color_diffuse + Info::SpecularColor * specular * color_specular;
 }
 
 
@@ -192,16 +197,14 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
 
 void setupParams(const picojson::value& settings) {
   // カメラ
-  glm::vec3 cam_rot = glm::radians(getVec<glm::vec3>(settings.get("cam_rot")));
-  glm::mat4 transform = glm::rotate(cam_rot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-    glm::rotate(cam_rot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-    glm::rotate(cam_rot.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
-    glm::translate(getVec<glm::vec3>(settings.get("cam_pos")));
-    
-  Info::cam_pos  = (transform * glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }).xyz();
-  Info::cam_dir  = (transform * glm::vec4{ 0.0f, 0.0f, -1.0f, 0.0f }).xyz();
-  Info::cam_up   = (transform * glm::vec4{ 0.0f, 1.0f, 0.0f, 0.0f }).xyz();
-  Info::cam_side = glm::cross(Info::cam_dir, Info::cam_up);
+  {
+    Info::cam_pos = getVec<glm::vec3>(settings.get("Eye"));
+    auto target   = getVec<glm::vec3>(settings.get("Target"));
+    Info::cam_up  = glm::normalize(getVec<glm::vec3>(settings.get("Up")));
+
+    Info::cam_dir  = glm::normalize(target - Info::cam_pos);
+    Info::cam_side = glm::cross(Info::cam_dir, Info::cam_up);
+  }
 
   // 焦点距離
   Info::focus = settings.get("focus").get<double>();
@@ -212,12 +215,13 @@ void setupParams(const picojson::value& settings) {
 
   // ライティング
   {
-    Info::Specular    = settings.get("Specular").get<double>();
-    Info::SpecularExp = settings.get("SpecularExp").get<double>();
-    Info::SpecularMax = settings.get("SpecularMax").get<double>();
+    Info::Specular      = settings.get("Specular").get<double>();
+    Info::SpecularExp   = settings.get("SpecularExp").get<double>();
+    Info::SpecularMax   = settings.get("SpecularMax").get<double>();
+    Info::SpecularColor = getVec<glm::vec3>(settings.get("SpotLightColor"));
   
     float SpotLight      = settings.get("SpotLight").get<double>();
-    Info::SpotLightColor = getVec<glm::vec3>(settings.get("SpotLightColor")) * SpotLight;
+    Info::SpotLightColor = Info::SpecularColor * SpotLight;
     glm::vec2 dir        = getVec<glm::vec2>(settings.get("SpotLightDir"));
     glm::vec3 spot_dir   = glm::vec3(glm::sin(dir.x * M_PI) * glm::cos(dir.y * M_PI / 2.0),
                                      glm::sin(dir.y * M_PI / 2.0) * glm::sin(dir.x * M_PI),
