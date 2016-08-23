@@ -16,9 +16,9 @@
   "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
   "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
 
-  "Specular": 0.05,
+  "Specular": 0.025,
   "SpecularExp": 60,
-  "SpecularMax": 100,
+  "SpecularMax": 50,
 
   "SpotLight": 0.5,
   "SpotLightColor": [ 1, 1, 1 ],
@@ -28,7 +28,7 @@
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.4,
 
-  "Reflection": 0.1,
+  "Reflection": 0.0,
   
   "Fog": 0.3,
   "FogColor": [ 0.8, 0.8, 0.9 ],
@@ -50,8 +50,9 @@
   },
 
   
-  "bloom_threshold": 100.0,
-  "bloom_sig": 5.0,
+  "bloom_threshold": 10.0,
+  "bloom_sig": 3.5,
+  "bloom_intensity": 1.0,
 
   "exposure": -2.5,
 

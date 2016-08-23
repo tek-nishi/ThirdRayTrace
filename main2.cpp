@@ -104,6 +104,7 @@ int main() {
   // Bloom
   Bloom::threshold = params->settings.get("bloom_threshold").get<double>();
   Bloom::sig       = params->settings.get("bloom_sig").get<double>();
+  Bloom::intensity = params->settings.get("bloom_intensity").get<double>();
   auto bloomed_pixel = Bloom::process(params->pixel, params->iresolution.x, params->iresolution.y);
   
   // 露出

@@ -144,13 +144,15 @@ namespace Bloom {
 
 float threshold;
 float sig;
+float intensity;
+
 
 std::vector<glm::vec3> process(const std::vector<glm::vec3>& in,
                                const int width, const int height) {
   // 高輝度を抽出
   std::vector<glm::vec3> hi_brightness(in.size());
   for (size_t i = 0; i < in.size(); ++i) {
-    hi_brightness[i] = in[i] * glm::step(threshold, in[i]);
+    hi_brightness[i] = in[i] * glm::step(threshold, in[i]) * intensity;
   }
 
   // ガウシアンフィルタでぼかす
