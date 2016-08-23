@@ -1,43 +1,43 @@
 {
-  "resolution": [ 640, 480 ],
+  "resolution": [ 800, 600 ],
 
   "render_interval": 30,
-  "render_duration": 2,
+  "render_duration": 5,
   "render_iterate":  1,
   
-  "cam_pos": [ 0.0, -0.5, 3.5 ],
-  "cam_rot": [ 10.0, -15.0, 90.0 ],
+  "cam_pos": [ 0.0, 0.0, 2.8 ],
+  "cam_rot": [ 5.0, -85.0, 0.0 ],
   
-  "focus": 2.0,
+  "focus": 1.25,
 
-  "focal_distance": 3.8,
-  "lens_radius": 0.05,
+  "focal_distance": 0.8,
+  "lens_radius": 0.0,
   
   "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
   "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
 
-  "Specular": 0.5,
-  "SpecularExp": 45,
-  "SpecularMax": 10,
+  "Specular": 0.05,
+  "SpecularExp": 60,
+  "SpecularMax": 100,
 
   "SpotLight": 0.5,
   "SpotLightColor": [ 1, 1, 1 ],
-  "SpotLightDir": [ 0.2098800, 0.1000000 ],
+  "SpotLightDir": [ -0.3, -0.5 ],
   
-  "CamLight": 0.6,
+  "CamLight": 0.2,
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.4,
 
-  "Reflection": 0.25,
+  "Reflection": 0.1,
   
-  "Fog": 0.0,
-  "FogColor": [ 1.0, 1.0, 0.95 ],
+  "Fog": 0.3,
+  "FogColor": [ 0.8, 0.8, 0.9 ],
   
   "glow": 0.0,
   "glow_max": 150,
   "glow_color": [ 1.0, 1.0, 1.0 ],
   
-  "iterate": 500,
+  "iterate": 1000,
   "detail": -2.2,
   "max_dist": 1000,
   "FudgeFactor": 1.0,
@@ -50,15 +50,19 @@
   },
 
   
-  "bloom_threshold": 5.0,
-  "bloom_sig": 4.0,
+  "bloom_threshold": 100.0,
+  "bloom_sig": 5.0,
 
-  "exposure": -3.0,
+  "exposure": -2.5,
 
 
   "Plane": {
     "height": 1.25,
     "normal": [ -1, 0, 0 ]
+  },
+
+  "Sphere": {
+    "radius": 1.0
   },
   
   "Torus": {

@@ -9,8 +9,9 @@
 #include <limits>
 
 #include "Texture.hpp"
-#include "Torus.hpp"
 #include "Plane.hpp"
+#include "Sphere.hpp"
+#include "Torus.hpp"
 #include "Mandelbulb.hpp"
 #include "Mandelbox.hpp"
 #include "QuaternionJulia.hpp"
@@ -81,8 +82,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = QuaternionJulia::distance(p);
-  d = glm::min(d, Plane::distance(p));
+  float d = Mandelbox::distance(p);
   return d;
 }
 
@@ -164,9 +164,11 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
     glm::vec3 normal = getNormal(pos_on_ray);
     
     float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
-    // glm::vec3 color = IBL(normal);
+    
+    glm::vec3 reflect_ray_dir = glm::reflect(ray_dir, normal);
     glm::vec3 color = lighting(normal,
-                               Info::image_diffuse.getPixel(normal), Info::image_specular.getPixel(normal),
+                               Info::image_diffuse.getPixel(normal),
+                               Info::image_diffuse.getPixel(reflect_ray_dir),
                                pos_on_ray, ray_dir);
     color *= shadow;
 
@@ -174,10 +176,8 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
     color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
 
     if (reflect && Info::Reflection > 0.0f) {
-      glm::vec3 new_ray_dir = glm::reflect(ray_dir, normal);
-      glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * Info::min_dist;
-      
-      color = glm::mix(color, trace(new_ray_dir, new_pos_on_ray, false), Info::Reflection);
+      glm::vec3 new_pos_on_ray = pos_on_ray + reflect_ray_dir * Info::min_dist;
+      color = glm::mix(color, trace(reflect_ray_dir, new_pos_on_ray, false), Info::Reflection);
     }
     
     return color;
@@ -185,7 +185,7 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
   else {
     // どこにも衝突しなかった
     // return Info::glow_color * step_factor;
-    return Info::image_diffuse.getPixel(ray_dir) + Info::glow_color * step_factor;
+    return Info::image_specular.getPixel(ray_dir) + Info::glow_color * step_factor;
   }
 }
 
@@ -258,6 +258,7 @@ void setupParams(const picojson::value& settings) {
   }
 
   Plane::init(settings.get("Plane"));
+  Sphere::init(settings.get("Sphere"));
   Torus::init(settings.get("Torus"));
   Mandelbulb::init(settings.get("Mandelbulb"));
   Mandelbox::init(settings.get("Mandelbox"));

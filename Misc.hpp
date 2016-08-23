@@ -75,7 +75,7 @@ glm::vec2 vec3ToUV(const glm::vec3& normal) {
     else                  uv.y = 0.0f;
   }
   else {
-    if (normal.z == 0.0f) uv.x = (normal.x < 0.0f) ? M_PI_2 : -M_PI_2;
+    if (normal.z == 0.0f) uv.x = (normal.x < 0.0f) ? -M_PI_2 : M_PI_2;
     else                  uv.x = glm::atan(normal.x, normal.z);
     
     float x = glm::length(normal.xz());
