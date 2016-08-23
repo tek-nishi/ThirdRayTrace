@@ -4,6 +4,8 @@
 // レンダラー
 //
 
+#include <chrono>
+#include <iostream>
 #include <limits>
 
 #include "Texture.hpp"
@@ -45,6 +47,9 @@ float lens_radius;
 
 Texture image_diffuse;
 Texture image_specular;
+
+float Fog;
+glm::vec3 FogColor;
 
 float glow_max;
 glm::vec3 glow_color;
@@ -161,8 +166,12 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
     glm::vec3 color = lighting(normal,
                                Info::image_diffuse.getPixel(normal), Info::image_specular.getPixel(normal),
                                pos_on_ray, ray_dir);
+    color *= shadow;
+
+    // OpenGL GL_EXP2 like fog
+    color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
     
-    return color * shadow;
+    return color;
   }
   else {
     // どこにも衝突しなかった
@@ -192,13 +201,6 @@ void setupParams(const picojson::value& settings) {
   Info::focal_distance = settings.get("focal_distance").get<double>();
   Info::lens_radius    = settings.get("lens_radius").get<double>();
 
-  // 光彩
-  {
-    Info::glow_max   = settings.get("glow_max").get<double>();
-    float glow       = settings.get("glow").get<double>();
-    Info::glow_color = getVec<glm::vec3>(settings.get("glow_color")) * glow;
-  }
-
   // ライティング
   {
     Info::Specular    = settings.get("Specular").get<double>();
@@ -216,6 +218,16 @@ void setupParams(const picojson::value& settings) {
     float CamLight      = settings.get("CamLight").get<double>();
     Info::CamLightColor = getVec<glm::vec3>(settings.get("CamLightColor")) * CamLight;
     Info::CamLightMin   = settings.get("CamLightMin").get<double>();
+  }
+
+  Info::Fog      = settings.get("Fog").get<double>();
+  Info::FogColor = getVec<glm::vec3>(settings.get("FogColor"));
+  
+  // 光彩
+  {
+    Info::glow_max   = settings.get("glow_max").get<double>();
+    float glow       = settings.get("glow").get<double>();
+    Info::glow_color = getVec<glm::vec3>(settings.get("glow_color")) * glow;
   }
 
   // 反復数とか
@@ -253,6 +265,8 @@ void render(const std::shared_ptr<RenderParams>& params) {
   // IBL用画像
   Info::image_diffuse  = Texture(settings.get("image_diffuse").get<std::string>());
   Info::image_specular = Texture(settings.get("image_specular").get<std::string>());
+
+  auto begin_time = std::chrono::system_clock::now();
   
   // レンダリング回数
   // TIPS:-1で無限ループw
@@ -296,4 +310,11 @@ void render(const std::shared_ptr<RenderParams>& params) {
   
   // レンダリング完了!!
   params->complete = true;
+
+  auto current_time = std::chrono::system_clock::now();
+  std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - begin_time);
+  std::cout << "Render time "
+            << duration.count()
+            << " sec."
+            << std::endl;
 }

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 #c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 main.cpp
-c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 main2.cpp
+c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 -march=native main2.cpp

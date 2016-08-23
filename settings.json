@@ -1,11 +1,11 @@
 {
   "resolution": [ 640, 480 ],
 
-  "render_interval": 2,
-  "render_duration": 5,
+  "render_interval": 1,
+  "render_duration": 3,
   "render_iterate":  1,
   
-  "cam_pos": [ 0.0, 0.0, 4 ],
+  "cam_pos": [ 0.0, 0.0, 4.0 ],
   "cam_rot": [ -15.0, -30.0, 0.0 ],
   
   "focus": 2.5,
@@ -28,14 +28,17 @@
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.4,
 
+  "Fog": 0.28,
+  "FogColor": [ 1.0, 1.0, 0.9 ],
+  
   "glow": 0.3,
   "glow_max": 150,
   "glow_color": [ 1.0, 1.0, 1.0 ],
   
   "iterate": 50,
-  "detail": -2,
+  "detail": -2.5,
   "max_dist": 500,
-  "FudgeFactor": 0.9687500,
+  "FudgeFactor": 0.98,
 
   "shadow": {
     "iteration": 16,
