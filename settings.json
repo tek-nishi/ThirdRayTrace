@@ -46,10 +46,14 @@
     "coef":      0.35,
     "power":     4
   },
+
   
+  "bloom_threshold": 1.0,
+  "bloom_sig": 4.0,
+
   "exposure": -2.0,
 
-
+  
   "Torus": {
     "outer_radius": 0.75,
     "inner_radius": 0.25

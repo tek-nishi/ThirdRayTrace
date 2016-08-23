@@ -101,9 +101,14 @@ int main() {
   }
 
   // ポストプロセス
+  // Bloom
+  Bloom::threshold = params->settings.get("bloom_threshold").get<double>();
+  Bloom::sig       = params->settings.get("bloom_sig").get<double>();
+  auto bloomed_pixel = Bloom::process(params->pixel, params->iresolution.x, params->iresolution.y);
+  
   // 露出
   Expose::value = params->settings.get("exposure").get<double>();
-  auto pixel = Expose::process(params->pixel);
+  auto pixel = Expose::process(bloomed_pixel);
   
   // 最終結果を書き出す
   writeFinalImage("Result.bmp", pixel, params->iresolution.x, params->iresolution.y);
