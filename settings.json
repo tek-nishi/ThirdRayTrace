@@ -2,21 +2,21 @@
   "resolution": [ 640, 480 ],
 
   "render_interval": 30,
-  "render_duration": 1,
-  "render_iterate":  1,
+  "render_duration": 5,
+  "render_iterate":  1000,
   
-  "cam_pos": [ 0.0, 0.0, 4.0 ],
-  "cam_rot": [ -15.0, -30.0, 0.0 ],
+  "cam_pos": [ 0.0, 0.0, 3.2 ],
+  "cam_rot": [ 5.0, 5.0, 0.0 ],
   
-  "focus": 2.5,
+  "focus": 2.0,
 
   "focal_distance": 12.0,
   "lens_radius": 0.0,
   
-  "image_diffuse":  "ibl1_env.hdr",
-  "image_specular": "ibl1.hdr",
+  "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
+  "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
 
-  "Specular": 0.3,
+  "Specular": 0.0,
   "SpecularExp": 45,
   "SpecularMax": 10,
 
@@ -28,17 +28,19 @@
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.4,
 
-  "Fog": 0.28,
-  "FogColor": [ 1.0, 1.0, 0.9 ],
+  "Reflection": 0.0,
   
-  "glow": 0.3,
+  "Fog": 0.0,
+  "FogColor": [ 1.0, 1.0, 0.95 ],
+  
+  "glow": 0.0,
   "glow_max": 150,
   "glow_color": [ 1.0, 1.0, 1.0 ],
   
-  "iterate": 50,
-  "detail": -2.5,
-  "max_dist": 500,
-  "FudgeFactor": 0.98,
+  "iterate": 1000,
+  "detail": -2.2,
+  "max_dist": 1000,
+  "FudgeFactor": 1.0,
 
   "shadow": {
     "iteration": 16,
@@ -48,7 +50,7 @@
   },
 
   
-  "bloom_threshold": 1.0,
+  "bloom_threshold": 10.0,
   "bloom_sig": 4.0,
 
   "exposure": -2.0,
@@ -73,8 +75,8 @@
   "Mandelbox": {
     "Iterations": 10,
     "ColorIterations": 1,
-    "MinRad2": 0.25,
-    "Scale": 2.0434401,
+    "MinRad2": 0.2372881,
+    "Scale": -2.6269430,
     "RotVector": [ 0, 1, 0 ],
     "RotAngle": 0
   },

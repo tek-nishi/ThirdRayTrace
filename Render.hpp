@@ -64,6 +64,8 @@ glm::vec3 SpotLightDir;
 glm::vec3 CamLightColor;
 float CamLightMin;
 
+float Reflection;
+
 int iterate;
 float min_dist;
 float max_dist;
@@ -78,7 +80,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = QuaternionJulia::distance(p);
+  float d = Mandelbox::distance(p);
   return d;
 }
 
@@ -134,7 +136,7 @@ glm::vec3 lighting(const glm::vec3& n,
 }
 
 
-glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
+glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const bool reflect) {
   // レイマーチで交差点を調べる
   float td = 0.0f;
   glm::vec3 pos_on_ray;
@@ -158,10 +160,7 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   
   if (hit) {
     glm::vec3 normal = getNormal(pos_on_ray);
-
-    // glm::vec3 new_ray_dir = glm::reflect(ray_dir, normal);
-    // glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * 0.001f;
-
+    
     float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
     // glm::vec3 color = IBL(normal);
     glm::vec3 color = lighting(normal,
@@ -171,6 +170,13 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
 
     // OpenGL GL_EXP2 like fog
     color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
+
+    if (reflect && Info::Reflection > 0.0f) {
+      glm::vec3 new_ray_dir = glm::reflect(ray_dir, normal);
+      glm::vec3 new_pos_on_ray = pos_on_ray + new_ray_dir * Info::min_dist;
+      
+      color = glm::mix(color, trace(new_ray_dir, new_pos_on_ray, false), Info::Reflection);
+    }
     
     return color;
   }
@@ -220,6 +226,8 @@ void setupParams(const picojson::value& settings) {
     Info::CamLightColor = getVec<glm::vec3>(settings.get("CamLightColor")) * CamLight;
     Info::CamLightMin   = settings.get("CamLightMin").get<double>();
   }
+
+  Info::Reflection = settings.get("Reflection").get<double>();
 
   Info::Fog      = settings.get("Fog").get<double>();
   Info::FogColor = getVec<glm::vec3>(settings.get("FogColor"));
@@ -303,7 +311,7 @@ void render(const std::shared_ptr<RenderParams>& params) {
         ray_dir = glm::normalize(focus_pos - ray_origin);
 
         int offset = x + y * Info::iresolution.x;
-        params->pixel[offset] = glm::mix(params->pixel[offset], trace(ray_dir, ray_origin), d);
+        params->pixel[offset] = glm::mix(params->pixel[offset], trace(ray_dir, ray_origin, true), d);
       }
     }
     
