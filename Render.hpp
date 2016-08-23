@@ -10,6 +10,7 @@
 
 #include "Texture.hpp"
 #include "Torus.hpp"
+#include "Plane.hpp"
 #include "Mandelbulb.hpp"
 #include "Mandelbox.hpp"
 #include "QuaternionJulia.hpp"
@@ -80,7 +81,8 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbox::distance(p);
+  float d = QuaternionJulia::distance(p);
+  d = glm::min(d, Plane::distance(p));
   return d;
 }
 
@@ -255,6 +257,7 @@ void setupParams(const picojson::value& settings) {
     Info::shadowPower     = p.get("power").get<double>();
   }
 
+  Plane::init(settings.get("Plane"));
   Torus::init(settings.get("Torus"));
   Mandelbulb::init(settings.get("Mandelbulb"));
   Mandelbox::init(settings.get("Mandelbox"));
