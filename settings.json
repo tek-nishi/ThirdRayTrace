@@ -1,8 +1,8 @@
 {
   "resolution": [ 640, 480 ],
 
-  "render_interval": 1,
-  "render_duration": 3,
+  "render_interval": 30,
+  "render_duration": 1,
   "render_iterate":  1,
   
   "cam_pos": [ 0.0, 0.0, 4.0 ],

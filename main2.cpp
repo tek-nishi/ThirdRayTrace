@@ -33,6 +33,10 @@
 
 
 int main() {
+#ifdef _OPENMP
+  std::cout << "Use OpenMP." << std::endl;
+#endif
+  
   // メインスレッドでは一定時間ごとにレンダリング結果をファイルに書き出す
   // 4分30秒が経過したら最終レンダリング結果を書き出す
   // FIXME:PNGよりBMP書き出しが良さげ(圧縮とかしないので高速)

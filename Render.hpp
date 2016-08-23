@@ -140,6 +140,7 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   glm::vec3 pos_on_ray;
   bool hit = false;
   float steps = 0.0f;
+
   for(int i = 0; !hit && i < Info::iterate; ++i) {
     pos_on_ray = ray_origin + ray_dir * td;
     float d = getDistance(pos_on_ray) * Info::FudgeFactor;
@@ -269,10 +270,11 @@ void render(const std::shared_ptr<RenderParams>& params) {
   auto begin_time = std::chrono::system_clock::now();
   
   // レンダリング回数
-  // TIPS:-1で無限ループw
   int render_iterate = settings.get("render_iterate").get<double>();
   params->render_num = 0;
-  for (int i = 0; i != render_iterate; ++i) {
+
+#pragma omp parallel for
+  for (int i = 0; i < render_iterate; ++i) {
     // レンダリング回数から、新しい色の影響力を決める
     // TIPS:ループの内側で変化しない値なので、ここで定義
     float d = 1.0f / float(i + 1);
