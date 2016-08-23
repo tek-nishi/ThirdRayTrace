@@ -10,6 +10,7 @@
 #include "Torus.hpp"
 #include "Mandelbulb.hpp"
 #include "Mandelbox.hpp"
+#include "QuaternionJulia.hpp"
 
 
 // レンダリングに必要な情報
@@ -61,6 +62,7 @@ float CamLightMin;
 int iterate;
 float min_dist;
 float max_dist;
+float FudgeFactor;
 
 int shadowIteration = 32;
 int shadowMinDist;
@@ -71,7 +73,7 @@ float shadowPower   = 16.0f;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Mandelbox::distance(p);
+  float d = QuaternionJulia::distance(p);
   return d;
 }
 
@@ -91,7 +93,7 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
   float r = 1.0f;
 
   for(int i = 0; i < Info::shadowIteration; ++i) {
-    h = getDistance(ro + rd * c);
+    h = getDistance(ro + rd * c) * Info::FudgeFactor;
     if(h < Info::shadowMinDist) {
       return Info::shadowCoef;
     }
@@ -135,7 +137,7 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin) {
   float steps = 0.0f;
   for(int i = 0; !hit && i < Info::iterate; ++i) {
     pos_on_ray = ray_origin + ray_dir * td;
-    float d = getDistance(pos_on_ray);
+    float d = getDistance(pos_on_ray) * Info::FudgeFactor;
     td += d;
     steps += 1.0f;
 
@@ -216,10 +218,11 @@ void setupParams(const picojson::value& settings) {
     Info::CamLightMin   = settings.get("CamLightMin").get<double>();
   }
 
-  // 反復数
+  // 反復数とか
   Info::iterate  = settings.get("iterate").get<double>();
   Info::min_dist = glm::pow(10.0, settings.get("detail").get<double>());
   Info::max_dist = settings.get("max_dist").get<double>();
+  Info::FudgeFactor = settings.get("FudgeFactor").get<double>();
 
   // 影
   {
@@ -234,6 +237,7 @@ void setupParams(const picojson::value& settings) {
   Torus::init(settings.get("Torus"));
   Mandelbulb::init(settings.get("Mandelbulb"));
   Mandelbox::init(settings.get("Mandelbox"));
+  QuaternionJulia::init(settings.get("QuaternionJulia"));
 }
 
 void render(const std::shared_ptr<RenderParams>& params) {
