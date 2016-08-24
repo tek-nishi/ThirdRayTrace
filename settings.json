@@ -2,8 +2,8 @@
   "resolution": [ 1280, 720 ],
 
   "render_interval": 30,
-  "render_duration": 24,
-  "render_iterate":  1,
+  "render_duration": 298,
+  "render_iterate":  1000,
 
   "focus": 2.5,
   
@@ -150,7 +150,7 @@
     "Iterations": 12,
     "ColorIterations": 2,
     "MinRad2": 0.3437500,
-    "Scale": 3.11,
+    "Scale": 3.1,
     "RotVector": [ 0, 1, 0 ],
     "RotAngle": 0,
     "Threshold": 1000

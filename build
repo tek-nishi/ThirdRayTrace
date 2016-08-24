@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 main.cpp
-c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 -march=native main2.cpp
+#c++ -std=c++11 -stdlib=libc++ -Iinclude -O2 -march=native main2.cpp
 #g++-6 -Iinclude -O2 -march=native -fopenmp -D_GLIBCXX_PARALLEL main2.cpp
-#g++-6 -Iinclude -O2 -march=native -fopenmp main2.cpp
+g++-6 -Iinclude -O2 -march=native -fopenmp main2.cpp
 #g++-6 -Iinclude -O2 -march=native main2.cpp
