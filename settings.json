@@ -1,30 +1,30 @@
 {
   "resolution": [ 1280, 720 ],
 
-  "render_interval": 60,
-  "render_duration": 25,
+  "render_interval": 30,
+  "render_duration": 24,
   "render_iterate":  1,
 
   "focus": 2.5,
   
   "Eye":    [
-    0.9268421,
-    -0.6757498,
-    -0.4633086
+    0.8614067,
+    -0.4672642,
+    -0.5787538
   ],
   "Target": [
-    -4.8868985,
-    7.2156794,
-    5.9043493
+    -3.9665524,
+    5.2227737,
+    6.8502083
   ],
   "Up": [
-    0.8469659,
-    0.2927513,
-    0.4104828
+    0.1528379,
+    0.0255976,
+    0.0797210
   ],
 
-  "focal_distance": 3.0,
-  "lens_radius": 0.0,
+  "focal_distance": 0.774893,
+  "lens_radius": 0.0015,
   
   "image_diffuse":  "WinterForest_Env.hdr",
   "image_specular": "WinterForest_Ref.hdr",
@@ -33,7 +33,7 @@
   "SpecularExp": 16,
   "SpecularMax": 10,
 
-  "SpotLight": 0.8,
+  "SpotLight": 1.0,
   "SpotLightColor": [ 1.0, 1.0, 1.0 ],
   "SpotLightDir": [
     0.2871287,
@@ -42,7 +42,7 @@
   
   "CamLight": 1.2,
   "CamLightColor": [ 1, 1, 1 ],
-  "CamLightMin": 0.4,
+  "CamLightMin": 0.45,
   
   "Fog": 0.38,
   "FogColor": [ 0.8, 0.9, 1.0 ],
@@ -51,7 +51,7 @@
   "glow_max": 150,
   "glow_color": [ 1.0, 1.0, 1.0 ],
   
-  "iterate": 100,
+  "iterate": 200,
   "detail": -2.9,
   "max_dist": 1000,
   "FudgeFactor": 1.0,
@@ -67,7 +67,7 @@
   "shadow": {
     "iteration": 16,
     "detail":    -4,
-    "coef":      0.25,
+    "coef":      0.35,
     "power":     6
   },
 
@@ -90,8 +90,8 @@
       "OrbitStrength": 0.4646465,
       "X": [ 0.4, 0.8, 1.0, -0.8848921 ],
       "Y": [ 0.0, 0.0, 1.0, -0.6115108 ],
-      "Z": [ 1.0, 0.0, 0.0, 0.8273381 ],
-      "R": [ 1.0, 0.5, 0.0, 0.1510791 ],
+      "Z": [ 2.0, 0.0, 0.0, 0.8273381 ],
+      "R": [ 1.5, 0.75, 0.0, 0.1510791 ],
       "CycleColors": false,
       "Cycles": 0,
 
@@ -103,7 +103,7 @@
       "OrbitStrength": 0.45,
       "X": [ 1.0, 0.0, 0.0, -0.5971223 ],
       "Y": [ 0.8, 0.4, 1.0, 0.1654676 ],
-      "Z": [ 1.0, 0.5, 0.0, 0.3525180 ],
+      "Z": [ 0.0, 0.5, 0.5, 0.3525180 ],
       "R": [ 0.0, 0.0, 1.0, -0.2949640 ],
       "CycleColors": false,
       "Cycles": 2.5210526,
@@ -114,11 +114,11 @@
   ],
 
   
-  "bloom_threshold": 1.0,
-  "bloom_sig": 3.0,
+  "bloom_threshold": 1.4,
+  "bloom_sig": 3.5,
   "bloom_intensity": 1.0,
 
-  "exposure": -2.2,
+  "exposure": -2.1,
 
 
   "Plane": {
@@ -147,10 +147,10 @@
   },
 
   "Mandelbox": {
-    "Iterations": 10,
-    "ColorIterations": 1,
+    "Iterations": 12,
+    "ColorIterations": 2,
     "MinRad2": 0.3437500,
-    "Scale": 3.15,
+    "Scale": 3.11,
     "RotVector": [ 0, 1, 0 ],
     "RotAngle": 0,
     "Threshold": 1000
@@ -173,5 +173,5 @@
   "SphereDir": 0.5,
   "SphereScale": 0.16,
   "SphereOffset_": [ 0.02, -0.025, -0.08 ],
-  "SphereOffset": [ 0.508109, -0.014469, 0.018654 ]
+  "SphereOffset": [ 0.528109, -0.024469, 0.018654 ]
 }

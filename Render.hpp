@@ -354,9 +354,10 @@ void setupParams(const picojson::value& settings) {
   {
     // float dir = settings.get("SphereDir").get<double>();
     // Info::SphereOffset = getVec<glm::vec3>(settings.get("SphereOffset")) + Info::cam_pos + Info::cam_dir * dir;
-    // std::cout << glm::to_string(Info::SphereOffset) << std::endl;
     Info::SphereOffset = getVec<glm::vec3>(settings.get("SphereOffset"));
     Info::SphereScale  = settings.get("SphereScale").get<double>();
+
+    // std::cout << glm::length(Info::SphereOffset - Info::cam_pos) << std::endl;
   }
 }
 
