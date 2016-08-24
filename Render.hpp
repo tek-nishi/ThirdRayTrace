@@ -91,6 +91,10 @@ float shadowPower;
 
 std::vector<Color> colors;
 
+
+glm::vec3 SphereOffset;
+float SphereScale;
+
 };
 
 
@@ -107,19 +111,23 @@ struct Result {
       orbitTrap(r.second),
       index(i)
   {}
+  
 };
 
 
 Result getDistance(const glm::vec3& p) {
-  auto d = Plane::distance(p);
-  Result result(d, 0);
+
+  auto d0 = Sphere::distance(p - Info::SphereOffset);
+  Result result{ d0, 0 };
 
   {
-    auto d1 = QuaternionJulia::distance(p);
+    auto d1 = QuaternionJulia::distance((p - Info::SphereOffset) / Info::SphereScale);
+    d1.first *= Info::SphereScale;
     if (d1.first < result.d) result = Result(d1, 1);
   }
+  
   {
-    auto d1 = Sphere::distance(p - glm::vec3(-0.1, 0.25, 0.8));
+    auto d1 = Mandelbox::distance(p);
     if (d1.first < result.d) result = Result(d1, 2);
   }
   
@@ -341,6 +349,15 @@ void setupParams(const picojson::value& settings) {
   Mandelbulb::init(settings.get("Mandelbulb"));
   Mandelbox::init(settings.get("Mandelbox"));
   QuaternionJulia::init(settings.get("QuaternionJulia"));
+
+  // 配置
+  {
+    // float dir = settings.get("SphereDir").get<double>();
+    // Info::SphereOffset = getVec<glm::vec3>(settings.get("SphereOffset")) + Info::cam_pos + Info::cam_dir * dir;
+    // std::cout << glm::to_string(Info::SphereOffset) << std::endl;
+    Info::SphereOffset = getVec<glm::vec3>(settings.get("SphereOffset"));
+    Info::SphereScale  = settings.get("SphereScale").get<double>();
+  }
 }
 
 void render(std::shared_ptr<RenderParams> params) {
