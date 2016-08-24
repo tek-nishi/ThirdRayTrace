@@ -2,8 +2,8 @@
   "resolution": [ 800, 600 ],
 
   "render_interval": 30,
-  "render_duration": 2,
-  "render_iterate":  1,
+  "render_duration": 5,
+  "render_iterate":  2,
 
   "focus": 2.5,
   
@@ -29,7 +29,7 @@
   "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
   "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
 
-  "Specular": 0.0,
+  "Specular": 0.5,
   "SpecularExp": 80,
   "SpecularMax": 10,
 
@@ -37,11 +37,11 @@
   "SpotLightColor": [ 1.0, 1.0, 1.0 ],
   "SpotLightDir": [ 0.3, 0.45 ],
   
-  "CamLight": 0,
+  "CamLight": 1.0,
   "CamLightColor": [ 1, 1, 1 ],
-  "CamLightMin": 0.2,
+  "CamLightMin": 0.25,
 
-  "Reflection": 0.0,
+  "Reflection": 0.1,
   
   "Fog": 0.0,
   "FogColor": [ 0.8, 0.8, 0.9 ],
@@ -50,7 +50,7 @@
   "glow_max": 150,
   "glow_color": [ 1.0, 1.0, 1.0 ],
   
-  "iterate": 100,
+  "iterate": 200,
   "detail": -2.5,
   "max_dist": 1000,
   "FudgeFactor": 1.0,
@@ -71,7 +71,7 @@
   },
 
   
-  "bloom_threshold": 2.0,
+  "bloom_threshold": 3.0,
   "bloom_sig": 3.5,
   "bloom_intensity": 1.0,
 

@@ -22,9 +22,9 @@
 #define GLM_SWIZZLE
 #define GLM_META_PROG_HELPERS
 #include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include "Misc.hpp"

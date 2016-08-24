@@ -94,7 +94,7 @@ float shadowPower;
 
 
 float getDistance(const glm::vec3& p) {
-  float d = Sphere::distance(p);
+  float d = QuaternionJulia::distance(p);
   d = glm::min(d, Plane::distance(p));
   return d;
 }
