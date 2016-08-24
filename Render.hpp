@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 
+#include "Color.hpp"
 #include "Texture.hpp"
 #include "Plane.hpp"
 #include "Sphere.hpp"
@@ -90,21 +91,49 @@ int shadowMinDist;
 float shadowCoef;
 float shadowPower;
 
+std::vector<Color> colors;
+
 };
 
 
-float getDistance(const glm::vec3& p) {
-  float d = QuaternionJulia::distance(p);
-  d = glm::min(d, Plane::distance(p));
-  return d;
+// 距離関数の結果に色情報を追加している
+struct Result {
+  float d;
+  glm::vec4 orbitTrap;
+  int index;
+
+  Result() = default;
+  
+  Result(const std::pair<float, glm::vec4>& r, const int i)
+    : d(r.first),
+      orbitTrap(r.second),
+      index(i)
+  {}
+};
+
+
+Result getDistance(const glm::vec3& p) {
+  auto d = Plane::distance(p);
+  Result result(d, 0);
+
+  {
+    auto d1 = QuaternionJulia::distance(p);
+    if (d1.first < result.d) result = Result(d1, 1);
+  }
+  {
+    auto d1 = Sphere::distance(p - glm::vec3(-0.1, 0.25, 0.8));
+    if (d1.first < result.d) result = Result(d1, 2);
+  }
+  
+  return result;
 }
 
 glm::vec3 getNormal(const glm::vec3& p) {
   const float d = 0.0001f;
 
-  return glm::normalize(glm::vec3(getDistance(p + glm::vec3(d,0.0,0.0)) -getDistance(p + glm::vec3(-d,0.0,0.0)),
-                                  getDistance(p + glm::vec3(0.0,d,0.0)) -getDistance(p + glm::vec3(0.0,-d,0.0)),
-                                  getDistance(p + glm::vec3(0.0,0.0,d)) -getDistance(p + glm::vec3(0.0,0.0,-d))));
+  return glm::normalize(glm::vec3(getDistance(p + glm::vec3(  d, 0.0, 0.0)).d - getDistance(p + glm::vec3( -d, 0.0, 0.0)).d,
+                                  getDistance(p + glm::vec3(0.0,   d, 0.0)).d - getDistance(p + glm::vec3(0.0,  -d, 0.0)).d,
+                                  getDistance(p + glm::vec3(0.0, 0.0,   d)).d - getDistance(p + glm::vec3(0.0, 0.0,  -d)).d));
 }
 
 
@@ -115,7 +144,7 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
   float r = 1.0f;
 
   for(int i = 0; i < Info::shadowIteration; ++i) {
-    h = getDistance(ro + rd * c) * Info::FudgeFactor;
+    h = getDistance(ro + rd * c).d * Info::FudgeFactor;
     if(h < Info::shadowMinDist) {
       return Info::shadowCoef;
     }
@@ -132,7 +161,7 @@ float calcAO(const glm::vec3& pos, const glm::vec3& nor) {
   for (int i = 0; i < Info::AoIteration; ++i) {
     float hr = Info::AoStep * i / Info::AoIterValue;
     glm::vec3 aopos =  nor * hr + pos;
-    float dd = getDistance(aopos);
+    float dd = getDistance(aopos).d;
     occ += -(dd - hr) * sca;
     sca *= Info::AoAttenuation;
   }
@@ -170,10 +199,12 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
   glm::vec3 pos_on_ray;
   bool hit = false;
   float steps = 0.0f;
+  Result result;
 
   for(int i = 0; !hit && i < Info::iterate; ++i) {
     pos_on_ray = ray_origin + ray_dir * td;
-    float d = getDistance(pos_on_ray) * Info::FudgeFactor;
+    result = getDistance(pos_on_ray);
+    float d = result.d * Info::FudgeFactor;
     td += d;
     steps += 1.0f;
 
@@ -194,16 +225,20 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
                  * genShadow(p, Info::SpotLightDir);
     
     glm::vec3 reflect_ray_dir = glm::reflect(ray_dir, normal);
+
+    const auto& matrial = Info::colors[result.index];
+    glm::vec3 c = matrial.get(result.orbitTrap);
+    
     glm::vec3 color = lighting(normal,
-                               Info::image_diffuse.getPixel(normal),
-                               Info::image_diffuse.getPixel(reflect_ray_dir),
+                               Info::image_diffuse.getPixel(normal) * c,
+                               Info::image_diffuse.getPixel(reflect_ray_dir) * c,
                                pos_on_ray, ray_dir);
-   color *= shadow;
+    color *= shadow;
 
     // OpenGL GL_EXP2 like fog
     color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
 
-    if (reflect && Info::Reflection > 0.0f) {
+    if (reflect && matrial.isReflection() && Info::Reflection > 0.0f) {
       glm::vec3 new_pos_on_ray = pos_on_ray + reflect_ray_dir * Info::min_dist;
       color = glm::mix(color, trace(reflect_ray_dir, new_pos_on_ray, false), Info::Reflection);
     }
@@ -294,6 +329,14 @@ void setupParams(const picojson::value& settings) {
     Info::shadowMinDist   = glm::pow(10.0, p.get("detail").get<double>());
     Info::shadowCoef      = p.get("coef").get<double>();
     Info::shadowPower     = p.get("power").get<double>();
+  }
+
+  // マテリアルカラー
+  {
+    const auto& params = settings.get("Colors").get<picojson::array>();
+    for (const auto& p : params) {
+      Info::colors.emplace_back(p);
+    }
   }
 
   Plane::init(settings.get("Plane"));

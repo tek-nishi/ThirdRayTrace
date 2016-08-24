@@ -16,8 +16,8 @@ void init(const picojson::value& params) {
   normal = glm::normalize(getVec<glm::vec3>(params.get("normal")));
 }
 
-float distance(const glm::vec3& p) {
-  return glm::dot(p, glm::vec3(normal)) + height;
+std::pair<float, glm::vec4> distance(const glm::vec3& p) {
+  return std::make_pair(glm::dot(p, glm::vec3(normal)) + height, glm::vec4());
 }
 
 }

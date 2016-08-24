@@ -61,26 +61,27 @@ void powN2(glm::vec3& z, const float zr0, float& dr) {
 	z  = zr*glm::vec3( glm::cos(zo)*glm::cos(zi), glm::cos(zo)*glm::sin(zi), glm::sin(zo) );
 }
 
-float distance(const glm::vec3& pos) {
-	glm::vec3 z=pos;
-	float r;
-	float dr=1.0;
-	int i=0;
-	r=glm::length(z);
-	while(r<Bailout && (i<Iterations)) {
+std::pair<float, glm::vec4> distance(const glm::vec3& pos) {
+	glm::vec3 z = pos;
+	float r = glm::length(z);
+	float dr = 1.0f;
+	int i = 0;
+  glm::vec4 orbitTrap(10000.0f);
+  
+	while(r < Bailout && (i < Iterations)) {
 		if (AlternateVersion) {
-			powN2(z,r,dr);
+			powN2(z, r, dr);
 		} else {
-			powN1(z,r,dr);
+			powN1(z, r, dr);
 		}
-		z+=(Julia ? JuliaC : pos);
-		r=glm::length(z);
+		z += (Julia ? JuliaC : pos);
+		r = glm::length(z);
 		z = rot * z;
-    // if (i<ColorIterations) orbitTrap = min(orbitTrap, abs(vec4(z.x,z.y,z.z,r*r)));
+    if (i < ColorIterations) orbitTrap = glm::min(orbitTrap, glm::abs(glm::vec4(z.x, z.y, z.z, r * r)));
 		i++;
 	}
 //	if ((type==1) && r<Bailout) return 0.0;
-	return 0.5*glm::log(r)*r/dr;
+	return std::make_pair(0.5f * glm::log(r) * r / dr, orbitTrap);
 	/*
 	Use this code for some nice intersections (Power=2)
 	float a =  max(0.5*log(r)*r/dr, abs(pos.y));

@@ -37,16 +37,17 @@ void init(const picojson::value& params) {
   AbsScaleRaisedTo1mIters = glm::pow(glm::abs(Scale), float(1 - Iterations));
 }
 
-// Compute the distance from `pos` to the Mandelbox.
-float distance(const glm::vec3& pos) {
+// 距離と色を求める
+std::pair<float, glm::vec4> distance(const glm::vec3& pos) {
   glm::vec4 p = glm::vec4(pos,1), p0 = p;  // p.w is the distance estimate
+  glm::vec4 orbitTrap(10000.0f);
 	
 	for (int i = 0; i < Iterations; i++) {
     glm::vec3 pp(p.xyz());
     pp = rot * pp;
     pp = glm::clamp(pp, -1.0f, 1.0f) * 2.0f - pp;  // min;max;mad
 		float r2 = glm::dot(pp, pp);
-		//if (i<ColorIterations) orbitTrap = min(orbitTrap, abs(vec4(p.xyz,r2)));
+		if (i < ColorIterations) orbitTrap = glm::min(orbitTrap, glm::abs(glm::vec4(pp, r2)));
 
     // FIXME:glmだと p.xyz = pp と書けない
     p.x = pp.x;
@@ -58,7 +59,7 @@ float distance(const glm::vec3& pos) {
     if (r2 > Threshold) break;
 	}
 
-  return (glm::length(p.xyz()) - absScalem1) / p.w - AbsScaleRaisedTo1mIters;
+  return std::make_pair((glm::length(p.xyz()) - absScalem1) / p.w - AbsScaleRaisedTo1mIters, orbitTrap);
 }
 
 }

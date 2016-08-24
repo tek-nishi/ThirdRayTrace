@@ -13,8 +13,8 @@ void init(const picojson::value& params) {
   radius = params.get("radius").get<double>();
 }
 
-float distance(const glm::vec3& p) {
-  return glm::length(p) - radius;
+std::pair<float, glm::vec4> distance(const glm::vec3& p) {
+  return std::make_pair(glm::length(p) - radius, glm::vec4());
 }
 
 }
