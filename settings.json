@@ -5,22 +5,22 @@
   "render_duration": 2,
   "render_iterate":  1,
 
-  "focus": 3.0,
+  "focus": 2.5,
   
   "Eye":    [
-    -0.9877604,
-    -5.9021420,
-    1.9734780
+    0,
+    0.1,
+    4.0
   ],
   "Target": [
-    0.4086494,
-    3.4819980,
-    -1.1869040
+    0.0,
+    0.1,
+    0.0
   ],
   "Up": [
-    0.9873145,
-    -0.1075963,
-    0.1167571
+    0.0,
+    1.0,
+    0.0
   ],
 
   "focal_distance": 3.1,
@@ -29,15 +29,15 @@
   "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
   "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
 
-  "Specular": 0.4,
-  "SpecularExp": 16.3640003,
+  "Specular": 0.0,
+  "SpecularExp": 80,
   "SpecularMax": 10,
 
-  "SpotLight": 0.3,
-  "SpotLightColor": [ 0.3, 0.3, 1.0 ],
-  "SpotLightDir": [ 0.1, 0.1 ],
+  "SpotLight": 1.0,
+  "SpotLightColor": [ 1.0, 1.0, 1.0 ],
+  "SpotLightDir": [ 0.3, 0.45 ],
   
-  "CamLight": 2,
+  "CamLight": 0,
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.2,
 
@@ -55,6 +55,14 @@
   "max_dist": 1000,
   "FudgeFactor": 1.0,
 
+  "AO": {
+    "iteration": 5,
+    "step": 0.12,
+    "attenuation": 0.95,
+    "power": 3.0,
+    "min": 0.25
+  },
+  
   "shadow": {
     "iteration": 16,
     "detail":    -3,
@@ -71,8 +79,8 @@
 
 
   "Plane": {
-    "height": 1.25,
-    "normal": [ -1, 0, 0 ]
+    "height": 0.7,
+    "normal": [ 0, 1, 0 ]
   },
 
   "Sphere": {
@@ -86,6 +94,7 @@
   
   "QuaternionJulia": {
     "iterations": 5,
+    "ColorIterations": 1,
     "threshold": 12.6984126,
     "C": [
       0.7684211,
@@ -101,11 +110,13 @@
     "MinRad2": 0.2372881,
     "Scale": -2.6269430,
     "RotVector": [ 0, 1, 0 ],
-    "RotAngle": 0
+    "RotAngle": 0,
+    "Threshold": 1000
   },
 
   "Mandelbulb": {
     "Iterations": 5,
+    "ColorIterations": 1,
     "Power": 5.1014493,
     "Bailout": 3.8636364,
     "AlternateVersion": false,
@@ -114,15 +125,5 @@
 
     "Julia": true,
     "JuliaC": [ 0.1739130, -0.4927536, -1.3333333 ]
-  },
-
-  "Knot": {
-    "tubeRadius": 0.1,
-    "groupRadius": 0.309,
-    "objectRadius": 0.3592,
-    "RotNumeratorX": 2, 
-    "RotNumeratorY": 2,
-    "RotDenominator": 3,
-    "Rotations": 5
   }
 }

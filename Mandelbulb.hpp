@@ -9,6 +9,7 @@ namespace Mandelbulb {
 
 // 各種設定値
 int Iterations;
+int ColorIterations;
 float Power;
 float Bailout;
 bool AlternateVersion;
@@ -22,6 +23,7 @@ glm::mat3 rot;
 
 void init(const picojson::value& params) {
   Iterations       = params.get("Iterations").get<double>();
+  ColorIterations  = params.get("ColorIterations").get<double>();
   Power            = params.get("Power").get<double>();
   Bailout          = params.get("Bailout").get<double>();
   AlternateVersion = params.get("AlternateVersion").get<bool>();
@@ -33,11 +35,11 @@ void init(const picojson::value& params) {
   rot = glm::mat3_cast(glm::angleAxis(RotAngle, normalize(RotVector)));
 }
 
-void powN1(glm::vec3& z, float r, float& dr) {
+void powN1(glm::vec3& z, const float r, float& dr) {
 	// extract polar coordinates
 	float theta = glm::acos(z.z/r);
 	float phi = glm::atan(z.y,z.x);
-	dr =  glm::pow( r, Power-1.0)*Power*dr + 1.0;
+	dr = glm::pow( r, Power-1.0)*Power*dr + 1.0;
 	
 	// scale and rotate the point
 	float zr = glm::pow( r,Power);
@@ -48,7 +50,7 @@ void powN1(glm::vec3& z, float r, float& dr) {
 	z = zr*glm::vec3(glm::sin(theta)*glm::cos(phi), glm::sin(phi)*glm::sin(theta), glm::cos(theta));
 }
 
-void powN2(glm::vec3& z, float zr0, float& dr) {
+void powN2(glm::vec3& z, const float zr0, float& dr) {
 	float zo0 = glm::asin( z.z/zr0 );
 	float zi0 = glm::atan( z.y,z.x );
 	float zr = glm::pow( zr0, Power-1.0 );
@@ -74,6 +76,7 @@ float distance(const glm::vec3& pos) {
 		z+=(Julia ? JuliaC : pos);
 		r=glm::length(z);
 		z = rot * z;
+    // if (i<ColorIterations) orbitTrap = min(orbitTrap, abs(vec4(z.x,z.y,z.z,r*r)));
 		i++;
 	}
 //	if ((type==1) && r<Bailout) return 0.0;

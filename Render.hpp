@@ -78,16 +78,24 @@ float min_dist;
 float max_dist;
 float FudgeFactor;
 
-int shadowIteration = 32;
+int AoIteration;
+float AoIterValue;
+float AoStep;
+float AoAttenuation;
+float AoPower;
+float AoMin;
+
+int shadowIteration;
 int shadowMinDist;
-float shadowCoef    = 0.4f;
-float shadowPower   = 16.0f;
+float shadowCoef;
+float shadowPower;
 
 };
 
 
 float getDistance(const glm::vec3& p) {
   float d = Sphere::distance(p);
+  d = glm::min(d, Plane::distance(p));
   return d;
 }
 
@@ -116,6 +124,19 @@ float genShadow(const glm::vec3& ro, const glm::vec3& rd) {
   }
     
   return glm::mix(Info::shadowCoef, 1.0f, r);
+}
+
+float calcAO(const glm::vec3& pos, const glm::vec3& nor) {
+	float occ = 0.0f;
+  float sca = 1.0f;
+  for (int i = 0; i < Info::AoIteration; ++i) {
+    float hr = Info::AoStep * i / Info::AoIterValue;
+    glm::vec3 aopos =  nor * hr + pos;
+    float dd = getDistance(aopos);
+    occ += -(dd - hr) * sca;
+    sca *= Info::AoAttenuation;
+  }
+  return glm::clamp(1.0f - Info::AoPower * occ, Info::AoMin, 1.0f);    
 }
 
 
@@ -168,14 +189,16 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
   if (hit) {
     glm::vec3 normal = getNormal(pos_on_ray);
     
-    float shadow = genShadow(pos_on_ray + normal * Info::min_dist, normal);
+    auto p = pos_on_ray + normal * Info::min_dist;
+    float shadow = calcAO(p, normal)
+                 * genShadow(p, Info::SpotLightDir);
     
     glm::vec3 reflect_ray_dir = glm::reflect(ray_dir, normal);
     glm::vec3 color = lighting(normal,
                                Info::image_diffuse.getPixel(normal),
                                Info::image_diffuse.getPixel(reflect_ray_dir),
                                pos_on_ray, ray_dir);
-    color *= shadow;
+   color *= shadow;
 
     // OpenGL GL_EXP2 like fog
     color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
@@ -251,6 +274,18 @@ void setupParams(const picojson::value& settings) {
   Info::max_dist = settings.get("max_dist").get<double>();
   Info::FudgeFactor = settings.get("FudgeFactor").get<double>();
 
+  // AO
+  {
+    const auto& p = settings.get("AO");
+
+    Info::AoIteration   = p.get("iteration").get<double>();
+    Info::AoIterValue   = Info::AoIteration - 1;
+    Info::AoStep        = p.get("step").get<double>();
+    Info::AoAttenuation = p.get("attenuation").get<double>();
+    Info::AoPower       = p.get("power").get<double>();
+    Info::AoMin         = p.get("min").get<double>();
+  }
+  
   // 影
   {
     const auto& p = settings.get("shadow");

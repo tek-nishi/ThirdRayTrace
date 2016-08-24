@@ -13,6 +13,7 @@ float MinRad2;
 float Scale;
 glm::vec3 RotVector;
 float RotAngle;
+float Threshold;
 
 glm::vec4 scale;
 glm::mat3 rot;
@@ -27,6 +28,7 @@ void init(const picojson::value& params) {
   Scale           = params.get("Scale").get<double>();
   RotVector       = getVec<glm::vec3>(params.get("RotVector"));
   RotAngle        = glm::radians(params.get("RotAngle").get<double>());
+  Threshold       = params.get("Threshold").get<double>();
   
   scale = glm::vec4(Scale, Scale, Scale, glm::abs(Scale)) / MinRad2;
   rot   = glm::mat3_cast(glm::angleAxis(RotAngle, normalize(RotVector)));
@@ -53,7 +55,7 @@ float distance(const glm::vec3& pos) {
     
 		p *= glm::clamp(glm::max(MinRad2 / r2, MinRad2), 0.0f, 1.0f);  // dp3,div,max.sat,mul
 		p = p * scale + p0;
-    if (r2 > 1000.0f) break;
+    if (r2 > Threshold) break;
 	}
 
   return (glm::length(p.xyz()) - absScalem1) / p.w - AbsScaleRaisedTo1mIters;
