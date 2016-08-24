@@ -17,6 +17,7 @@ class Color {
   float Cycles;
 
   bool Reflection;
+  float ReflectionPower;
 
 
   static glm::vec3 cycle(const glm::vec3& c, const float s, const float cycles) {
@@ -35,7 +36,8 @@ public:
       R(getVec<glm::vec4>(params.get("R"))),
       CycleColors(params.get("CycleColors").get<bool>()),
       Cycles(params.get("Cycles").get<double>()),
-      Reflection(params.get("Reflection").get<bool>())
+      Reflection(params.get("Reflection").get<bool>()),
+      ReflectionPower(params.get("ReflectionPower").get<double>())
   {}
 
   glm::vec3 get(glm::vec4 orbitTrap) const {
@@ -58,5 +60,6 @@ public:
   }
 
   bool isReflection() const { return Reflection; }
+  float getReflectionPower() const { return ReflectionPower; }
   
 };

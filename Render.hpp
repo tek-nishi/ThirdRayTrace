@@ -72,8 +72,6 @@ glm::vec3 SpotLightDir;
 glm::vec3 CamLightColor;
 float CamLightMin;
 
-float Reflection;
-
 int iterate;
 float min_dist;
 float max_dist;
@@ -226,8 +224,8 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
     
     glm::vec3 reflect_ray_dir = glm::reflect(ray_dir, normal);
 
-    const auto& matrial = Info::colors[result.index];
-    glm::vec3 c = matrial.get(result.orbitTrap);
+    const auto& mat = Info::colors[result.index];
+    glm::vec3 c = mat.get(result.orbitTrap);
     
     glm::vec3 color = lighting(normal,
                                Info::image_diffuse.getPixel(normal) * c,
@@ -238,17 +236,17 @@ glm::vec3 trace(const glm::vec3& ray_dir, const glm::vec3& ray_origin, const boo
     // OpenGL GL_EXP2 like fog
     color = glm::mix(color, Info::FogColor, 1.0f - glm::exp(-glm::pow(Info::Fog, 4.0f) * td * td));
 
-    if (reflect && matrial.isReflection() && Info::Reflection > 0.0f) {
+    if (reflect && mat.isReflection()) {
       glm::vec3 new_pos_on_ray = pos_on_ray + reflect_ray_dir * Info::min_dist;
-      color = glm::mix(color, trace(reflect_ray_dir, new_pos_on_ray, false), Info::Reflection);
+      color = glm::mix(color, trace(reflect_ray_dir, new_pos_on_ray, false), mat.getReflectionPower());
     }
     
     return color;
   }
   else {
     // どこにも衝突しなかった
-    // return Info::glow_color * step_factor;
-    return Info::image_specular.getPixel(ray_dir) + Info::glow_color * step_factor;
+    auto color = reflect ? Info::image_diffuse.getPixel(ray_dir) : Info::image_specular.getPixel(ray_dir);
+    return color + Info::glow_color * step_factor;
   }
 }
 
@@ -290,8 +288,6 @@ void setupParams(const picojson::value& settings) {
     Info::CamLightColor = getVec<glm::vec3>(settings.get("CamLightColor")) * CamLight;
     Info::CamLightMin   = settings.get("CamLightMin").get<double>();
   }
-
-  Info::Reflection = settings.get("Reflection").get<double>();
 
   Info::Fog      = settings.get("Fog").get<double>();
   Info::FogColor = getVec<glm::vec3>(settings.get("FogColor"));
@@ -347,7 +343,7 @@ void setupParams(const picojson::value& settings) {
   QuaternionJulia::init(settings.get("QuaternionJulia"));
 }
 
-void render(const std::shared_ptr<RenderParams>& params) {
+void render(std::shared_ptr<RenderParams> params) {
   // TIPS:スレッド間で共有している値へのアクセスは重たいので
   //      必要な値はコピーしておく
   Info::iresolution = params->iresolution;

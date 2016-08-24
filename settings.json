@@ -26,8 +26,8 @@
   "focal_distance": 3.1,
   "lens_radius": 0.0,
   
-  "image_diffuse":  "Siggraph2007_UpperFloor_Env.hdr",
-  "image_specular": "Siggraph2007_UpperFloor_REF.hdr",
+  "image_diffuse":  "WinterForest_Env.hdr",
+  "image_specular": "WinterForest_Ref.hdr",
 
   "Specular": 0.04,
   "SpecularExp": 80,
@@ -40,8 +40,6 @@
   "CamLight": 1.5,
   "CamLightColor": [ 1, 1, 1 ],
   "CamLightMin": 0.3,
-
-  "Reflection": 0.1,
   
   "Fog": 0.0,
   "FogColor": [ 0.8, 0.8, 0.9 ],
@@ -80,7 +78,9 @@
       "R": [ 0, 0, 0, 1 ],
       "CycleColors": false,
       "Cycles": 0,
-      "Reflection": true
+
+      "Reflection": true,
+      "ReflectionPower": 0.2
     },
     {
       "BaseColor": [ 1, 1, 1 ],
@@ -91,10 +91,12 @@
       "R": [ 1, 1, 0, -0.1 ],
       "CycleColors": false,
       "Cycles": 0,
-      "Reflection": false
+
+      "Reflection": false,
+      "ReflectionPower": 0
     },
     {
-      "BaseColor": [ 0.5, 1, 0.5 ],
+      "BaseColor": [ 0.25, 1, 0.25 ],
       "OrbitStrength": 0,
       "X": [ 0, 0, 0, 1 ],
       "Y": [ 0, 0, 0, 1 ],
@@ -102,7 +104,9 @@
       "R": [ 0, 0, 0, 1 ],
       "CycleColors": false,
       "Cycles": 0,
-      "Reflection": false
+
+      "Reflection": true,
+      "ReflectionPower": 0.5
     }
   ],
 
