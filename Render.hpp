@@ -357,7 +357,7 @@ void setupParams(const picojson::value& settings) {
     Info::SphereOffset = getVec<glm::vec3>(settings.get("SphereOffset"));
     Info::SphereScale  = settings.get("SphereScale").get<double>();
 
-    // std::cout << glm::length(Info::SphereOffset - Info::cam_pos) << std::endl;
+    // std::cout << "Center distance: " << glm::length(Info::SphereOffset - Info::cam_pos) << std::endl;
   }
 }
 

@@ -2,29 +2,29 @@
   "resolution": [ 1280, 720 ],
 
   "render_interval": 30,
-  "render_duration": 298,
-  "render_iterate":  1000,
+  "render_duration": 25,
+  "render_iterate":  1,
 
   "focus": 2.5,
   
   "Eye":    [
-    0.8614067,
-    -0.4672642,
-    -0.5787538
+    1.2100813,
+    -0.5861315,
+    -0.7036817
   ],
   "Target": [
-    -3.9665524,
-    5.2227737,
-    6.8502083
+    -4.8058752,
+    4.7850233,
+    6.0664110
   ],
   "Up": [
-    0.1528379,
-    0.0255976,
-    0.0797210
+    0.1420182,
+    0.0452584,
+    0.0902920
   ],
 
-  "focal_distance": 0.774893,
-  "lens_radius": 0.0015,
+  "focal_distance": 1.08119,
+  "lens_radius": 0.002,
   
   "image_diffuse":  "WinterForest_Env.hdr",
   "image_specular": "WinterForest_Ref.hdr",
@@ -33,7 +33,7 @@
   "SpecularExp": 16,
   "SpecularMax": 10,
 
-  "SpotLight": 1.0,
+  "SpotLight": 1.1,
   "SpotLightColor": [ 1.0, 1.0, 1.0 ],
   "SpotLightDir": [
     0.2871287,
@@ -41,11 +41,11 @@
   ],
   
   "CamLight": 1.2,
-  "CamLightColor": [ 1, 1, 1 ],
-  "CamLightMin": 0.45,
+  "CamLightColor": [ 0.5, 0.5, 1.0 ],
+  "CamLightMin": 0.35,
   
-  "Fog": 0.38,
-  "FogColor": [ 0.8, 0.9, 1.0 ],
+  "Fog": 0.4,
+  "FogColor": [ 0.7, 0.9, 1.0 ],
   
   "glow": 0.5,
   "glow_max": 150,
@@ -61,13 +61,13 @@
     "step": 0.06,
     "attenuation": 0.95,
     "power": 3.0,
-    "min": 0.5
+    "min": 0.4
   },
   
   "shadow": {
     "iteration": 16,
     "detail":    -4,
-    "coef":      0.35,
+    "coef":      0.3,
     "power":     6
   },
 
@@ -127,7 +127,7 @@
   },
 
   "Sphere": {
-    "radius": 0.04
+    "radius": 0.06
   },
   
   "Torus": {
@@ -136,13 +136,13 @@
   },
   
   "QuaternionJulia": {
-    "iterations": 13,
-    "threshold": 15,
+    "iterations": 15,
+    "threshold": 51,
     "C": [
-      -0.7129630,
-      -0.4814815,
-      0.0462963,
-      0.2500000
+      -0.5952381,
+      -0.6904762,
+      0.0357143,
+      -0.1666667
     ]
   },
 
